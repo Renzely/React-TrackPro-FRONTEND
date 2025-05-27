@@ -1,0 +1,116 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+.sidebar {
+  width: 60px;
+  height: 95vh;
+  background: #1b4965;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Align items to the top */
+  padding: 10px 0; /* Adjust padding */
+  transition: width 0.3s;
+  font-family: "Inter", sans-serif;
+}
+
+.sidebar-divider {
+  width: 90%; /* Adjust width as needed */
+  border: 0;
+  height: 1px;
+  background: #ffffff; /* Adjust color to match your design */
+  margin: 10px auto; /* Add spacing above and below the line */
+  margin-top: -20px;
+}
+
+.sidebar.open {
+  width: 200px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: center; /* Center when closed */
+  width: 100%;
+  padding: 20px 0; /* Add some padding */
+}
+
+.sidebar.open .sidebar-header {
+  justify-content: flex-end; /* Align to the right when open */
+  padding-right: 10px; /* Add some spacing from the edge */
+}
+
+.sidebar-user {
+  text-align: center;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the avatar */
+  margin-top: 50px;
+  margin-bottom: 50px;
+  position: relative; /* Make sure user info is fixed relative to this container */
+  border: none; /* Ensure no border is applied */
+  background: none; /* Ensure no background is applied */
+}
+
+.sidebar-avatar {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.sidebar-name {
+  font-size: 12px;
+  font-family: "Inter", sans-serif;
+  color: white;
+  border: none; /* Ensure no border is applied */
+  background: none; /* Ensure no background is applied */
+}
+
+.sidebar-menu a {
+  text-decoration: none; /* Remove underline */
+}
+
+.sidebar-menu a.active {
+  text-decoration: none; /* Remove underline from active */
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align menu items to the left */
+  list-style: none;
+  padding: 0;
+  gap: 15px; /* Reduce the gap between menu items */
+  width: 100%; /* Ensure the menu takes full width */
+  margin-top: 10px; /* Adjust margin to reduce gap */
+}
+
+.sidebar-menu li {
+  color: #ffffff;
+  font-size: 15px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  width: 100%; /* Ensure full width for alignment */
+  display: flex;
+  align-items: center; /* Align icon and text vertically */
+  gap: 10px; /* Space between icon and text */
+  box-sizing: border-box; /* Ensure padding is included in width */
+  border: none; /* Ensure no border is applied */
+  background: none; /* Ensure no background is applied */
+}
+
+.sidebar-menu li .sidebar-icon {
+  font-size: 24px;
+  min-width: 35px; /* Ensure icons have consistent width */
+}
+
+.sidebar-menu .active {
+  background: #0a21c0;
+  color: white;
+  width: 100%; /* Remove calc to ensure full width */
+}
+
+.logout {
+  color: red;
+}

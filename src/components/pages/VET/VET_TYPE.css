@@ -1,0 +1,10 @@
+.parcel {
+  flex: 5;
+  background-color: aliceblue;
+}
+.leaflet-container {
+  height: 100%;
+}
+.bold-header .MuiDataGrid-columnHeaderTitle {
+  font-weight: bold;
+}

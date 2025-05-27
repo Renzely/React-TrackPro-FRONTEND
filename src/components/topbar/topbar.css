@@ -1,0 +1,36 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+.topbar {
+  width: 100%;
+  height: 50px;
+  background-color: #051923;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  transition: margin-left 0.3s ease; /* Smooth transition */
+  font-family: "Inter", sans-serif;
+}
+
+.topbar.shifted {
+  margin-left: 150px; /* Shift topbar content to the right when sidebar is open */
+}
+
+.topbarWrapper {
+  height: 100%;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 30px;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+}
+
+.topbarIconContainer {
+  position: relative;
+}
