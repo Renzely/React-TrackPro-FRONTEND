@@ -26,6 +26,7 @@ const Path = () => {
       case "/view-VET":
       case "/view-attendance":
       case "/attendance":
+      case "/view-Expiry":
       case "/view-admin-accounts":
         return <Outlet />;
       default:
