@@ -13,16 +13,26 @@ import {
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import { Avatar, Typography, IconButton } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import AutoDeleteIcon from "@mui/icons-material/AutoDelete";
 import "./sidebar.css";
 
 export default function Sidebar() {
   const location = useLocation();
   const [activeItem, setActiveItem] = useState(location.pathname);
-  const [isOpen, setOpen] = useState(false);
+  const [isOpen, setOpen] = useState(() => {
+    return localStorage.getItem("sidebarOpen") === "true";
+  });
+
+  const toggleSidebar = () => {
+    const newState = !isOpen;
+    setOpen(newState);
+    localStorage.setItem("sidebarOpen", newState.toString());
+  };
 
   const handleItemClick = (itemName) => {
     setActiveItem(itemName);
-    setOpen(false); // Close sidebar on click
+    // Removed the line that closes the sidebar
+    // setOpen(false); // This was causing the sidebar to close on navigation
   };
 
   const handleLogout = () => {
@@ -37,7 +47,7 @@ export default function Sidebar() {
     <div className={`sidebar ${isOpen ? "open" : ""}`}>
       {/* Toggle Button */}
       <div className="sidebar-header">
-        <IconButton onClick={() => setOpen(!isOpen)} className="menu-button">
+        <IconButton onClick={toggleSidebar} className="menu-button">
           <MenuIcon sx={{ color: "white" }} />
         </IconButton>
       </div>
@@ -121,27 +131,14 @@ export default function Sidebar() {
           </li>
         </NavLink>
 
-        {/* <NavLink to="/inventory" onClick={() => handleItemClick("/inventory")}>
-          <li className={activeItem === "/inventory" ? "active" : ""}>
-            <Inventory className="sidebar-icon" /> {isOpen && "Inventory"}
-          </li>
-        </NavLink> */}
-
-        {/* <NavLink
-          to="/view-outletinputs"
-          onClick={() => handleItemClick("/view-outletinputs")}
+        <NavLink
+          to="/view-Expiry"
+          onClick={() => handleItemClick("/view-Expiry")}
         >
-          <li className={activeItem === "/view-outletinputs" ? "active" : ""}>
-            <Store className="sidebar-icon" /> {isOpen && "Outlet Inputs"}
+          <li className={activeItem === "/view-Expiry" ? "active" : ""}>
+            <AutoDeleteIcon className="sidebar-icon" /> {isOpen && "Expiry"}
           </li>
-        </NavLink> */}
-
-        {/* <NavLink to="/view-RTV" onClick={() => handleItemClick("/view-RTV")}>
-          <li className={activeItem === "/view-RTV" ? "active" : ""}>
-            <AssignmentReturn className="sidebar-icon" />{" "}
-            {isOpen && "Return to Vendor"}
-          </li>
-        </NavLink> */}
+        </NavLink>
 
         {/* Logout */}
         <li className="logout" onClick={handleLogout}>

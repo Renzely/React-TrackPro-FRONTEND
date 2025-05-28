@@ -207,28 +207,63 @@ export default function VET() {
     setSelectedImage(imageUrl);
   }
 
-  const filterParcelDate = () => {
-    //let selectedDate = new Date(dateFilter.$d).toLocaleString('en-us',{month:'numeric', timeZone: 'Asia/Manila'});
-    let month = new Date(dateFilter.$d).toLocaleString("en-us", {
-      month: "numeric",
-      timeZone: "Asia/Manila",
-    });
-    let day = new Date(dateFilter.$d).toLocaleString("en-us", {
-      day: "numeric",
-      timeZone: "Asia/Manila",
-    });
-    let year = new Date(dateFilter.$d).toLocaleString("en-us", {
-      year: "numeric",
-      timeZone: "Asia/Manila",
-    });
+  const fetchCompetitorByDate = async () => {
+    if (!dateBegin || !dateEnd) {
+      return alert("Please fill in the date fields.");
+    }
 
-    if (month.length === 1) month = "0" + month;
-    if (day.length === 1) day = "0" + day;
+    const bDate = new Date(dateBegin.$d);
+    bDate.setHours(0, 0, 0, 0);
 
-    const selectedDate = year + "-" + month + "-" + day;
-    console.log(selectedDate);
-    getDateRTV(selectedDate);
+    const eDate = new Date(dateEnd.$d);
+    eDate.setHours(23, 59, 59, 999);
+
+    if (bDate > eDate) {
+      return alert("End date must be the same or later than the start date.");
+    }
+
+    const selectedDate = {
+      startDate: bDate.toISOString(),
+      endDate: eDate.toISOString(),
+    };
+
+    await getDate(selectedDate);
   };
+
+  async function getDate(selectedDate) {
+    try {
+      const response = await axios.post(
+        "https://react-rc-ugc-v2-backend.onrender.com/filter-date-range-VET",
+        selectedDate
+      );
+
+      const parcels = response.data.data;
+      console.log("VET fetched:", parcels);
+
+      const sortedData = parcels.sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      );
+
+      const newData = sortedData.map((data, key) => ({
+        id: key + 1,
+        count: key + 1,
+        date: data.date,
+        userEmail: data.userEmail,
+        merchandiserName: data.merchandiser,
+        userType: data.userType,
+        outlet: data.outlet,
+        beforeImage: data.beforeImage,
+        afterImage: data.afterImage,
+        shelfSpace: data.shelfSpace,
+        designatedRack: data.designatedRack,
+      }));
+
+      console.log("Mapped VET data:", newData);
+      setUserData(newData);
+    } catch (error) {
+      console.error("Error fetching VET data:", error);
+    }
+  }
 
   async function getUser() {
     try {
@@ -544,6 +579,19 @@ export default function VET() {
               }}
             >
               Export
+            </Button>
+            <Button
+              onClick={fetchCompetitorByDate}
+              variant="contained"
+              sx={{
+                backgroundColor: "rgb(25, 118, 210)",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "rgb(21, 101, 192)",
+                },
+              }}
+            >
+              Show VET
             </Button>
           </Stack>
 

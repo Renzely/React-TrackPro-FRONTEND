@@ -220,6 +220,67 @@ export default function PSR() {
     setSelectedImage(imageUrl);
   }
 
+  const fetchCompetitorByDate = async () => {
+    if (!dateBegin || !dateEnd) {
+      return alert("Please fill in the date fields.");
+    }
+
+    // Keep dates in local timezone
+    const bDate = new Date(dateBegin.$d);
+    bDate.setHours(0, 0, 0, 0);
+
+    const eDate = new Date(dateEnd.$d);
+    eDate.setHours(23, 59, 59, 999);
+
+    if (bDate > eDate) {
+      return alert("End date must be the same or later than the start date.");
+    }
+
+    const selectedDate = {
+      // Send as local date strings or adjust timezone
+      startDate: bDate.toISOString(),
+      endDate: eDate.toISOString(),
+    };
+
+    await getDate(selectedDate);
+  };
+
+  async function getDate(selectedDate) {
+    try {
+      const response = await axios.post(
+        "https://react-rc-ugc-v2-backend.onrender.com/filter-date-range-PSR",
+        selectedDate
+      );
+
+      const parcels = response.data.data;
+      console.log("PSR fetched:", parcels);
+
+      const sortedData = parcels.sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      );
+
+      const newData = sortedData.map((data, key) => ({
+        id: key + 1,
+        count: key + 1,
+        date: data.date,
+        userEmail: data.userEmail,
+        merchandiserName: data.merchandiser,
+        userType: data.userType,
+        outlet: data.outlet,
+        beforeImage: data.beforeImage,
+        afterImage: data.afterImage,
+        firstBrandSeen: data.firstBrandSeen,
+        complianceDOG: data.complianceDOG,
+        complianceCAT: data.complianceCAT,
+      }));
+
+      console.log("Mapped PSR data:", newData);
+      setUserData(newData);
+    } catch (error) {
+      console.error("Error fetching PSR data:", error);
+    }
+  }
+
   async function getUser() {
     try {
       const loggedInBranch = localStorage.getItem("outlet");
@@ -480,6 +541,19 @@ export default function PSR() {
               }}
             >
               Export
+            </Button>
+            <Button
+              onClick={fetchCompetitorByDate}
+              variant="contained"
+              sx={{
+                backgroundColor: "rgb(25, 118, 210)",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "rgb(21, 101, 192)",
+                },
+              }}
+            >
+              Show PSR
             </Button>
           </Stack>
 
