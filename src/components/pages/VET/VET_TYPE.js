@@ -237,10 +237,9 @@ export default function VET() {
         selectedDate
       );
 
-      const parcels = response.data.data;
-      console.log("VET fetched:", parcels);
+      const VETdata = response.data.data;
 
-      const sortedData = parcels.sort(
+      const sortedData = VETdata.sort(
         (a, b) => new Date(b.date) - new Date(a.date)
       );
 
@@ -258,7 +257,6 @@ export default function VET() {
         designatedRack: data.designatedRack,
       }));
 
-      console.log("Mapped VET data:", newData);
       setUserData(newData);
     } catch (error) {
       console.error("Error fetching VET data:", error);
@@ -268,11 +266,6 @@ export default function VET() {
   async function getUser() {
     try {
       const loggedInBranch = localStorage.getItem("outlet");
-
-      if (!loggedInBranch) {
-        console.error("No branch information found for the logged-in admin.");
-        return;
-      }
 
       const branches = loggedInBranch.split(",").map((branch) => branch.trim());
 
@@ -309,7 +302,6 @@ export default function VET() {
         afterImage: item.afterImage || "",
       }));
 
-      console.log("Filtered QTT Scoring data (VET only):", newData);
       setUserData(newData);
     } catch (error) {
       console.error("Error fetching QTT Scoring data:", error.message);

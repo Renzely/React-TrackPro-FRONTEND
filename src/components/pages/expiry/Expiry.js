@@ -152,12 +152,7 @@ export default function Expiry() {
     try {
       const loggedInBranch = localStorage.getItem("outlet");
 
-      if (!loggedInBranch) {
-        console.error("No branch information found for the logged-in admin.");
-        return;
-      }
-
-      const branches = loggedInBranch.split(",").map((branch) => branch.trim());
+      const branches = loggedInBranch.split(",").map((outlet) => outlet.trim());
 
       const response = await axios.post(
         "https://react-rc-ugc-v2-backend.onrender.com/retrieve-expiry-data",
@@ -191,7 +186,6 @@ export default function Expiry() {
         }))
       );
 
-      console.log("Flattened Expiry Data:", flattenedData);
       setUserData(flattenedData);
     } catch (error) {
       console.error("Error fetching expiry data:", error.message);
