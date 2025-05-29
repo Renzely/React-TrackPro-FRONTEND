@@ -193,16 +193,12 @@ export default function Competitors() {
     try {
       const loggedInBranch = localStorage.getItem("outlet");
 
-      console.log("Logged in branch:", loggedInBranch);
-
       if (!loggedInBranch) {
         console.error("No branch information found for the logged-in admin.");
         return;
       }
 
       const branches = loggedInBranch.split(",").map((branch) => branch.trim());
-
-      console.log("Sending branches to API:", branches);
 
       const response = await axios.post(
         "https://react-rc-ugc-v2-backend.onrender.com/retrieve-competitor-data",
@@ -240,7 +236,6 @@ export default function Competitors() {
         feedback: data.feedback || "",
       }));
 
-      console.log("Mapped Competitor Data:", newData);
       setUserData(newData);
     } catch (error) {
       console.error("Error fetching competitor data:", error);

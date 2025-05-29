@@ -151,8 +151,6 @@ export default function Admin() {
         }
       );
 
-      console.log("User branches updated:", response.data);
-
       // Update the branch field in the userData state immediately
       const updatedUserData = userData.map((user) => {
         if (user.emailAddress === email) {
@@ -2949,42 +2947,42 @@ export default function Admin() {
     setOpenViewModal(false);
   };
 
-  const handleUpdate = async () => {
-    try {
-      // Extract emails
-      const selectedEmails = adminSelectedMerchandiser.map(
-        (item) => item.emailAddress
-      );
+  // const handleUpdate = async () => {
+  //   try {
+  //     // Extract emails
+  //     const selectedEmails = adminSelectedMerchandiser.map(
+  //       (item) => item.emailAddress
+  //     );
 
-      console.log("Selected emails:", selectedEmails);
+  //     console.log("Selected emails:", selectedEmails);
 
-      // Ensure selectedEmails is not empty and all elements are strings
-      if (
-        selectedEmails.length === 0 ||
-        selectedEmails.some((email) => typeof email !== "string")
-      ) {
-        console.warn("No emails selected or invalid email format");
-        return;
-      }
+  //     // Ensure selectedEmails is not empty and all elements are strings
+  //     if (
+  //       selectedEmails.length === 0 ||
+  //       selectedEmails.some((email) => typeof email !== "string")
+  //     ) {
+  //       console.warn("No emails selected or invalid email format");
+  //       return;
+  //     }
 
-      // Send the emails to the backend
-      const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/update-coor-details",
-        {
-          emails: selectedEmails,
-        }
-      );
+  //     // Send the emails to the backend
+  //     const response = await axios.post(
+  //       "https://react-rc-ugc-v2-backend.onrender.com/update-coor-details",
+  //       {
+  //         emails: selectedEmails,
+  //       }
+  //     );
 
-      if (response.status === 200) {
-        console.log("Update successful");
-        handleViewCloseModal();
-      } else {
-        console.error("Failed to update CoorDetails:", response.data.message);
-      }
-    } catch (error) {
-      console.error("Error updating CoorDetails:", error);
-    }
-  };
+  //     if (response.status === 200) {
+  //       console.log("Update successful");
+  //       handleViewCloseModal();
+  //     } else {
+  //       console.error("Failed to update CoorDetails:", response.data.message);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating CoorDetails:", error);
+  //   }
+  // };
 
   const columns = [
     {
@@ -3197,7 +3195,6 @@ export default function Admin() {
         isVerified: user.isVerified, // ✅ renamed here
       }));
 
-      console.log(newData, "mapped admin users");
       setUserData(newData);
     } catch (error) {
       console.error("Error fetching admin users:", error);
@@ -3242,7 +3239,7 @@ export default function Admin() {
       })
       .then(async (response) => {
         const data = await response.data;
-        console.log(response.data);
+
         if (data.status === 200) {
           setOtpCode(data.code);
           setOpenDialog(true);

@@ -252,10 +252,9 @@ export default function PSR() {
         selectedDate
       );
 
-      const parcels = response.data.data;
-      console.log("PSR fetched:", parcels);
+      const PSRdata = response.data.data;
 
-      const sortedData = parcels.sort(
+      const sortedData = PSRdata.sort(
         (a, b) => new Date(b.date) - new Date(a.date)
       );
 
@@ -274,7 +273,6 @@ export default function PSR() {
         complianceCAT: data.complianceCAT,
       }));
 
-      console.log("Mapped PSR data:", newData);
       setUserData(newData);
     } catch (error) {
       console.error("Error fetching PSR data:", error);
@@ -284,11 +282,6 @@ export default function PSR() {
   async function getUser() {
     try {
       const loggedInBranch = localStorage.getItem("outlet");
-
-      if (!loggedInBranch) {
-        console.error("No branch information found for the logged-in admin.");
-        return;
-      }
 
       const branches = loggedInBranch.split(",").map((branch) => branch.trim());
 
@@ -326,7 +319,6 @@ export default function PSR() {
         afterImage: item.afterImage || "",
       }));
 
-      console.log("Filtered QTT Scoring data (PSR only):", newData);
       setUserData(newData);
     } catch (error) {
       console.error("Error fetching QTT Scoring data:", error.message);

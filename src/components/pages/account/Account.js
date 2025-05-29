@@ -2770,8 +2770,6 @@ export default function Account() {
         }
       );
 
-      console.log("User branches updated:", response.data);
-
       // Update the branch field in the userData state
       const updatedUserData = userData.map((user) => {
         if (user.email === modalEmail) {
@@ -2963,12 +2961,6 @@ export default function Account() {
   async function getUser() {
     try {
       const loggedInBranch = localStorage.getItem("outlet");
-      console.log("Logged in branch:", loggedInBranch);
-
-      if (!loggedInBranch) {
-        console.error("No branch information found for the logged-in admin.");
-        return;
-      }
 
       const loggedInBranches = loggedInBranch
         .split(",")
@@ -2979,14 +2971,9 @@ export default function Account() {
       );
       const data = response.data.data;
 
-      console.log("User data:", data);
-
       const filteredData = data.filter((item) => {
-        console.log("Checking branch for user:", item.outlet);
         return loggedInBranches.some((outlet) => item.outlet?.includes(outlet));
       });
-
-      console.log(filteredData, "filtered user data");
 
       const newData = filteredData.map((data, key) => {
         const capitalizedNames = capitalizeWords([
@@ -3009,7 +2996,6 @@ export default function Account() {
         };
       });
 
-      console.log(newData, "filtered and mapped user data");
       setUserData(newData);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -3026,7 +3012,6 @@ export default function Account() {
       .then(async (response) => {
         const data = await response.data.data;
 
-        console.log(data, "status info");
         window.location.reload();
       });
   }
