@@ -51,28 +51,24 @@ export default function ViewAttendance() {
   const formatDateTime = (dateTime, hasTimedIn = false) => {
     if (!dateTime) return hasTimedIn ? "No Time In" : "No Time Out";
 
-    // Create a new Date object with the provided dateTime
+    // Parse the input string to Date object (assumed to be in local PH time already)
     const dateObj = new Date(dateTime);
 
-    // Get the offset in minutes between the local time and UTC
-    const offset = dateObj.getTimezoneOffset();
+    // Format date (e.g., 30-05-2025)
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const year = dateObj.getFullYear();
+    const formattedDate = `${day}-${month}-${year}`;
 
-    // Adjust the date object to the correct timezone (UTC+8 for Philippines)
-    const adjustedDateObj = new Date(dateObj.getTime() + offset * 60 * 1000);
-
-    // Format the date
-    const formattedDate = format(dateObj, "dd-MM-yyyy");
-
-    // Format the time in 12-hour h:mm AM/PM format
-    const hours = adjustedDateObj.getHours() % 12 || 12; // Converts 0 to 12 for 12-hour format
-    const minutes = String(adjustedDateObj.getMinutes()).padStart(2, "0");
-    const ampm = adjustedDateObj.getHours() >= 12 ? "PM" : "AM";
+    // Format time in 12-hour format with AM/PM
+    let hours = dateObj.getHours();
+    const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
 
     const formattedTime = `${hours}:${minutes} ${ampm}`;
 
-    return hasTimedIn
-      ? { date: formattedDate, time: formattedTime }
-      : { date: formattedDate, time: formattedTime };
+    return { date: formattedDate, time: formattedTime };
   };
 
   const capitalizeWords = (words) => {
@@ -514,10 +510,10 @@ export default function ViewAttendance() {
         "Merchandiser",
         "Date",
         "Time In",
-        // "Time In Photo",
+
         "Time In Location",
         "Time Out",
-        // "Time Out Photo",
+
         "Time Out Location",
         "Outlet",
       ];
