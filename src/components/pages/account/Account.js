@@ -67,8 +67,9 @@ export default function Account() {
   const handleOpen = () => setOpenModal(true);
   const handleClose = () => setOpenModal(false);
 
-  const [updateStatus, setUpdateStatus] = React.useState("");
+  const [updateStatus, setUpdateStatus] = React.useState(true);
   const [userEmail, setUserEmail] = React.useState("");
+
   var test = "testing";
 
   const requestBody = { isActivate: updateStatus, emailAddress: userEmail };
@@ -3003,17 +3004,32 @@ export default function Account() {
   }
 
   async function setStatus() {
-    console.log("check body", requestBody);
-    await axios
-      .put(
-        "https://react-rc-ugc-v2-backend.onrender.com/update-status",
-        requestBody
-      )
-      .then(async (response) => {
-        const data = await response.data.data;
+    // Use the states you’ve already set: userEmail and updateStatus
+    const requestBody = {
+      email: userEmail,
+      isVerified: updateStatus, // true or false
+    };
 
-        window.location.reload();
-      });
+    console.log("Sending data:", requestBody);
+
+    try {
+      const response = await axios.put(
+        "https://react-rc-ugc-v2-backend.onrender.com/update-user-status",
+        requestBody
+      );
+      console.log("Response:", response.data);
+
+      if (response.data.status === 200) {
+        // Update local data if needed, e.g., update userData state
+        window.location.reload(); // Or better: update userData directly instead of reload
+      } else {
+        console.error("Update failed:", response.data.data);
+        alert("Failed to update status: " + response.data.data);
+      }
+    } catch (error) {
+      console.error("Error:", error.response?.data || error.message);
+      alert("Error occurred: " + error.message);
+    }
   }
 
   React.useEffect(() => {
