@@ -88,7 +88,7 @@ export default function PSR() {
     {
       field: "outlet",
       headerName: "Outlet",
-      width: 220,
+      width: 400,
       headerClassName: "bold-header",
       headerAlign: "center", // Center header text
       align: "center", // Center data
@@ -106,112 +106,321 @@ export default function PSR() {
       headerName: "First Brand seen inside",
       width: 250,
       headerClassName: "bold-header",
-      headerAlign: "center", // Center header text
-      align: "center", // Center data
+      headerAlign: "center",
+      align: "center",
       renderCell: (params) => (
         <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
-          {params.value || "No Answer"}
+          {params.value}
         </div>
       ),
+    },
+    {
+      field: "firstBrandImage",
+      headerName: "First Brand Image",
+      width: 200,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const imageUrl = params.value;
+        const hasImage = !!imageUrl;
+
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              if (hasImage) handleOpenImageModal(imageUrl);
+              else alert("No image available");
+            }}
+            sx={{
+              backgroundColor: hasImage ? "#0A21C0" : "grey",
+              "&:hover": { backgroundColor: hasImage ? "#0A21C0" : "grey" },
+              cursor: hasImage ? "pointer" : "not-allowed",
+            }}
+            disabled={!hasImage}
+          >
+            {hasImage ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </Button>
+        );
+      },
     },
     {
       field: "complianceDOG",
       headerName: "Compliance with DOG Planogram",
       width: 250,
       headerClassName: "bold-header",
-      headerAlign: "center", // Center header text
-      align: "center", // Center data
+      headerAlign: "center",
+      align: "center",
       renderCell: (params) => (
         <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
-          {params.value || "No Answer"}
+          {params.value}
         </div>
       ),
+    },
+    {
+      field: "complianceDOGImage",
+      headerName: "DOG Planogram Image",
+      width: 200,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const imageUrl = params.value;
+        const hasImage = !!imageUrl;
+
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              if (hasImage) handleOpenImageModal(imageUrl);
+              else alert("No image available");
+            }}
+            sx={{
+              backgroundColor: hasImage ? "#0A21C0" : "grey",
+              "&:hover": { backgroundColor: hasImage ? "#0A21C0" : "grey" },
+              cursor: hasImage ? "pointer" : "not-allowed",
+            }}
+            disabled={!hasImage}
+          >
+            {hasImage ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </Button>
+        );
+      },
     },
     {
       field: "complianceCAT",
       headerName: "Compliance with CAT Planogram",
       width: 250,
       headerClassName: "bold-header",
-      headerAlign: "center", // Center header text
-      align: "center", // Center data
+      headerAlign: "center",
+      align: "center",
       renderCell: (params) => (
         <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
-          {params.value || "No Answer"}
+          {params.value}
         </div>
       ),
     },
-
     {
-      field: "beforeImage",
-      headerName: "Before Image",
+      field: "complianceCATImage",
+      headerName: "CAT Planogram Image",
       width: 200,
       headerClassName: "bold-header",
-      headerAlign: "center", // Center header text
-      align: "center", // Center data
+      headerAlign: "center",
+      align: "center",
       renderCell: (params) => {
-        const beforeImageUrl = params.row.beforeImage;
+        const imageUrl = params.value;
+        const hasImage = !!imageUrl;
 
         return (
-          <Stack style={{ marginTop: 10, alignItems: "center" }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => {
-                if (beforeImageUrl) {
-                  handleOpenImageModal(beforeImageUrl);
-                } else {
-                  alert("Before image not available");
-                }
-              }}
-              sx={{
-                backgroundColor: "#0A21C0", // Set the background color
-                "&:hover": {
-                  backgroundColor: "#0A21C0", // Set the hover background color
-                },
-                cursor: beforeImageUrl ? "pointer" : "not-allowed", // Disable pointer if no image
-              }}
-            >
-              {beforeImageUrl ? <VisibilityIcon /> : <VisibilityOffIcon />}
-            </Button>
-          </Stack>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              if (hasImage) handleOpenImageModal(imageUrl);
+              else alert("No image available");
+            }}
+            sx={{
+              backgroundColor: hasImage ? "#0A21C0" : "grey",
+              "&:hover": { backgroundColor: hasImage ? "#0A21C0" : "grey" },
+              cursor: hasImage ? "pointer" : "not-allowed",
+            }}
+            disabled={!hasImage}
+          >
+            {hasImage ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </Button>
         );
       },
     },
     {
-      field: "afterImage",
-      headerName: "After Image",
+      field: "visibilityCashier",
+      headerName: "Visibility of Cashier Area",
+      width: 250,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
+          {params.value}
+        </div>
+      ),
+    },
+    {
+      field: "visibilityCashierImage",
+      headerName: "Cashier Image",
       width: 200,
       headerClassName: "bold-header",
-      headerAlign: "center", // Center header text
-      align: "center", // Center data
+      headerAlign: "center",
+      align: "center",
       renderCell: (params) => {
-        const afterImageUrl = params.row.afterImage;
+        const imageUrl = params.value;
+        const hasImage = !!imageUrl;
 
         return (
-          <Stack style={{ marginTop: 10, alignItems: "center" }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => {
-                if (afterImageUrl) {
-                  handleOpenImageModal(afterImageUrl);
-                } else {
-                  alert("After image not available");
-                }
-              }}
-              sx={{
-                backgroundColor: "#0A21C0", // Set the background color
-                "&:hover": {
-                  backgroundColor: "#0A21C0", // Set the hover background color
-                },
-                cursor: afterImageUrl ? "pointer" : "not-allowed", // Disable pointer if no image
-              }}
-            >
-              {afterImageUrl ? <VisibilityIcon /> : <VisibilityOffIcon />}
-            </Button>
-          </Stack>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              if (hasImage) handleOpenImageModal(imageUrl);
+              else alert("No image available");
+            }}
+            sx={{
+              backgroundColor: hasImage ? "#0A21C0" : "grey",
+              "&:hover": { backgroundColor: hasImage ? "#0A21C0" : "grey" },
+              cursor: hasImage ? "pointer" : "not-allowed",
+            }}
+            disabled={!hasImage}
+          >
+            {hasImage ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </Button>
         );
       },
+    },
+    {
+      field: "endcapGondola",
+      headerName: "Endcap Gondola Highlight",
+      width: 250,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
+          {params.value}
+        </div>
+      ),
+    },
+    {
+      field: "endcapGondolaImage",
+      headerName: "Endcap Gondola Image",
+      width: 200,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const imageUrl = params.value;
+        const hasImage = !!imageUrl;
+
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              if (hasImage) handleOpenImageModal(imageUrl);
+              else alert("No image available");
+            }}
+            sx={{
+              backgroundColor: hasImage ? "#0A21C0" : "grey",
+              "&:hover": { backgroundColor: hasImage ? "#0A21C0" : "grey" },
+              cursor: hasImage ? "pointer" : "not-allowed",
+            }}
+            disabled={!hasImage}
+          >
+            {hasImage ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </Button>
+        );
+      },
+    },
+    {
+      field: "wetProductsHighlight",
+      headerName: "Wet Products Highlight",
+      width: 250,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
+          {params.value}
+        </div>
+      ),
+    },
+    {
+      field: "wetProductsHighlightImage",
+      headerName: "Wet Products Image",
+      width: 200,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const imageUrl = params.value;
+        const hasImage = !!imageUrl;
+
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              if (hasImage) handleOpenImageModal(imageUrl);
+              else alert("No image available");
+            }}
+            sx={{
+              backgroundColor: hasImage ? "#0A21C0" : "grey",
+              "&:hover": { backgroundColor: hasImage ? "#0A21C0" : "grey" },
+              cursor: hasImage ? "pointer" : "not-allowed",
+            }}
+            disabled={!hasImage}
+          >
+            {hasImage ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </Button>
+        );
+      },
+    },
+    {
+      field: "tacticalBin",
+      headerName: "Tactical Bin",
+      width: 250,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
+          {params.value}
+        </div>
+      ),
+    },
+    {
+      field: "tacticalBinImage",
+      headerName: "Tactical Bin Image",
+      width: 200,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const imageUrl = params.value;
+        const hasImage = !!imageUrl;
+
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              if (hasImage) handleOpenImageModal(imageUrl);
+              else alert("No image available");
+            }}
+            sx={{
+              backgroundColor: hasImage ? "#0A21C0" : "grey",
+              "&:hover": { backgroundColor: hasImage ? "#0A21C0" : "grey" },
+              cursor: hasImage ? "pointer" : "not-allowed",
+            }}
+            disabled={!hasImage}
+          >
+            {hasImage ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </Button>
+        );
+      },
+    },
+    {
+      field: "psrComment",
+      headerName: "PSR Comment",
+      width: 250,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
+          {params.value || "No Comment"}
+        </div>
+      ),
     },
   ];
 
@@ -262,15 +471,27 @@ export default function PSR() {
         id: key + 1,
         count: key + 1,
         date: data.date,
-        userEmail: data.userEmail,
         merchandiserName: data.merchandiser,
-        userType: data.userType,
+        userEmail: data.userEmail,
         outlet: data.outlet,
-        beforeImage: data.beforeImage,
-        afterImage: data.afterImage,
-        firstBrandSeen: data.firstBrandSeen,
+        userType: data.userType,
+        firstBrand: data.firstBrandSeen,
         complianceDOG: data.complianceDOG,
         complianceCAT: data.complianceCAT,
+        royalCaninSignage: data.royalCaninSignage,
+        visibilityCashier: data.visibilityCashier,
+        endcapGondola: data.endcapGondola,
+        wetProductsHighlight: data.wetProductsHighlight,
+        tacticalBin: data.tacticalBin,
+        psrComment: data.PSRComment || "",
+        firstBrandImage: data.firstBrandImage || "",
+        complianceDOGImage: data.complianceDOGImage || "",
+        complianceCATImage: data.complianceCATImage || "",
+        royalCaninSignageImage: data.royalCaninSignageImage || "",
+        visibilityCashierImage: data.visibilityCashierImage || "",
+        endcapGondolaImage: data.endcapGondolaImage || "",
+        wetProductsHighlightImage: data.wetProductsHighlightImage || "",
+        tacticalBinImage: data.tacticalBinImage || "",
       }));
 
       setUserData(newData);
@@ -305,6 +526,7 @@ export default function PSR() {
       // Filter to only PSR entries
       const psrData = sortedData.filter((item) => item.userType === "PSR");
 
+      // Map data to include your latest schema
       const newData = psrData.map((item, index) => ({
         count: index + 1,
         date: item.date,
@@ -312,11 +534,25 @@ export default function PSR() {
         userEmail: item.userEmail,
         outlet: item.outlet,
         userType: item.userType,
-        firstBrand: item.firstBrandSeen || "No Answer",
-        complianceDOG: item.complianceDOG || "No Answer",
-        complianceCAT: item.complianceCAT || "No Answer",
-        beforeImage: item.beforeImage || "",
-        afterImage: item.afterImage || "",
+        firstBrand: item.firstBrandSeen,
+        complianceDOG: item.complianceDOG,
+        complianceCAT: item.complianceCAT,
+        royalCaninSignage: item.royalCaninSignage,
+        visibilityCashier: item.visibilityCashier,
+        endcapGondola: item.endcapGondola,
+        wetProductsHighlight: item.wetProductsHighlight,
+        tacticalBin: item.tacticalBin,
+        psrComment: item.PSRComment || "",
+
+        // Images (showing URLs if they exist)
+        firstBrandImage: item.firstBrandImage || "",
+        complianceDOGImage: item.complianceDOGImage || "",
+        complianceCATImage: item.complianceCATImage || "",
+        royalCaninSignageImage: item.royalCaninSignageImage || "",
+        visibilityCashierImage: item.visibilityCashierImage || "",
+        endcapGondolaImage: item.endcapGondolaImage || "",
+        wetProductsHighlightImage: item.wetProductsHighlightImage || "",
+        tacticalBinImage: item.tacticalBinImage || "",
       }));
 
       setUserData(newData);
@@ -341,14 +577,13 @@ export default function PSR() {
       const response = await axios.post(
         "https://react-rc-ugc-v2-backend.onrender.com/export-PSR-data",
         {
-          start: startDate, // Send ISO string instead of timestamp
+          start: startDate,
           end: endDate,
         }
       );
 
       console.log("API Response:", response.data);
 
-      // If no data is returned, alert the user
       if (!response.data.data || response.data.data.length === 0) {
         return alert("No data found for the selected date range");
       }
@@ -359,24 +594,48 @@ export default function PSR() {
         "Merchandiser Name",
         "Outlet",
         "User Type",
+        "Royal Canin Signage",
+        "Royal Canin Signage Image",
         "First Brand Seen",
+        "First Brand Image",
         "Compliance DOG",
+        "Compliance DOG Image",
         "Compliance CAT",
-        "Before Image",
-        "After Image",
+        "Compliance CAT Image",
+        "Visibility Cashier",
+        "Visibility Cashier Image",
+        "Endcap Gondola",
+        "Endcap Gondola Image",
+        "Wet Products Highlight",
+        "Wet Products Highlight Image",
+        "Tactical Bin",
+        "Tactical Bin Image",
+        "PSR Comment",
       ];
 
-      const newData = response.data.data.map((item, key) => ({
-        count: key + 1,
+      const newData = response.data.data.map((item, index) => ({
+        count: index + 1,
         date: item.date,
-        merchandiserName: item.merchandiserName || "N/A",
-        outlet: item.outlet || "N/A",
-        userType: item.userType || "PSR",
-        firstBrandSeen: item.firstBrandSeen || "No Answer",
-        complianceDOG: item.complianceDOG || "No Answer",
-        complianceCAT: item.complianceCAT || "No Answer",
-        beforeImage: item.beforeImage || "",
-        afterImage: item.afterImage || "",
+        merchandiserName: item.merchandiserName,
+        outlet: item.outlet,
+        userType: item.userType,
+        royalCaninSignage: item.royalCaninSignage,
+        royalCaninSignageImage: item.royalCaninSignageImage || "",
+        firstBrand: item.firstBrandSeen,
+        firstBrandImage: item.firstBrandImage || "",
+        complianceDOG: item.complianceDOG,
+        complianceDOGImage: item.complianceDOGImage || "",
+        complianceCAT: item.complianceCAT,
+        complianceCATImage: item.complianceCATImage || "",
+        visibilityCashier: item.visibilityCashier,
+        visibilityCashierImage: item.visibilityCashierImage || "",
+        endcapGondola: item.endcapGondola,
+        endcapGondolaImage: item.endcapGondolaImage || "",
+        wetProductsHighlight: item.wetProductsHighlight,
+        wetProductsHighlightImage: item.wetProductsHighlightImage || "",
+        tacticalBin: item.tacticalBin,
+        tacticalBinImage: item.tacticalBinImage || "",
+        psrComment: item.PSRComment || "",
       }));
 
       console.log("Mapped Data:", newData);
@@ -389,23 +648,18 @@ export default function PSR() {
         skipHeader: true,
       });
 
-      // Calculate column widths dynamically
       const colWidths = headers.map((header, index) => {
-        if (header === "Before Image" || header === "After Image") {
-          const maxLength = Math.max(
-            header.length,
-            ...newData.map(
-              (row) => (row[Object.keys(row)[index]] || "").toString().length
-            )
-          );
-          return { wch: maxLength + 5 }; // Add padding for better appearance
-        }
-        return { wch: Math.max(header.length, 15) }; // Default width for other columns
+        const maxLength = Math.max(
+          header.length,
+          ...newData.map(
+            (row) => (row[Object.keys(row)[index]] || "").toString().length
+          )
+        );
+        return { wch: maxLength + 5 }; // Add a little padding
       });
 
       ws["!cols"] = colWidths;
 
-      // Apply bold styling to headers
       headers.forEach((_, index) => {
         const cellAddress = XLSX.utils.encode_cell({ r: 0, c: index });
         if (!ws[cellAddress]) return;
@@ -415,7 +669,6 @@ export default function PSR() {
         };
       });
 
-      // Apply center alignment to all data cells
       newData.forEach((row, rowIndex) => {
         Object.keys(row).forEach((_, colIndex) => {
           const cellAddress = XLSX.utils.encode_cell({
@@ -441,7 +694,6 @@ export default function PSR() {
       document.body.appendChild(link);
       link.click();
 
-      // Clean up
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
       alert(`Successfully exported ${newData.length} PSR records!`);
