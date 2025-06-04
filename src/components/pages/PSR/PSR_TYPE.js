@@ -102,8 +102,52 @@ export default function PSR() {
       align: "center", // Center data
     },
     {
+      field: "royalCaninSignage",
+      headerName: "Royal Canin Outside Signage",
+      width: 250,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <div style={{ whiteSpace: "pre-wrap", textAlign: "center" }}>
+          {params.value}
+        </div>
+      ),
+    },
+    {
+      field: "royalCaninSignageImage",
+      headerName: "Royal Canin Outside Signage Image",
+      width: 200,
+      headerClassName: "bold-header",
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const imageUrl = params.value;
+        const hasImage = !!imageUrl;
+
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              if (hasImage) handleOpenImageModal(imageUrl);
+              else alert("No image available");
+            }}
+            sx={{
+              backgroundColor: hasImage ? "#0A21C0" : "grey",
+              "&:hover": { backgroundColor: hasImage ? "#0A21C0" : "grey" },
+              cursor: hasImage ? "pointer" : "not-allowed",
+            }}
+            disabled={!hasImage}
+          >
+            {hasImage ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </Button>
+        );
+      },
+    },
+    {
       field: "firstBrand",
-      headerName: "First Brand seen inside",
+      headerName: "Dedicated rack for Royal Canin products, first brand seen",
       width: 250,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -116,7 +160,8 @@ export default function PSR() {
     },
     {
       field: "firstBrandImage",
-      headerName: "First Brand Image",
+      headerName:
+        "Dedicated rack for Royal Canin products, first brand seen Image",
       width: 200,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -160,7 +205,7 @@ export default function PSR() {
     },
     {
       field: "complianceDOGImage",
-      headerName: "DOG Planogram Image",
+      headerName: "Compliance with DOG Planogram Image",
       width: 200,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -204,7 +249,7 @@ export default function PSR() {
     },
     {
       field: "complianceCATImage",
-      headerName: "CAT Planogram Image",
+      headerName: "Compliance with CAT Planogram Image",
       width: 200,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -235,7 +280,7 @@ export default function PSR() {
     },
     {
       field: "visibilityCashier",
-      headerName: "Visibility of Cashier Area",
+      headerName: "Visibility in cashier",
       width: 250,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -248,7 +293,7 @@ export default function PSR() {
     },
     {
       field: "visibilityCashierImage",
-      headerName: "Cashier Image",
+      headerName: "Visibility in cashier Image",
       width: 200,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -279,7 +324,7 @@ export default function PSR() {
     },
     {
       field: "endcapGondola",
-      headerName: "Endcap Gondola Highlight",
+      headerName: "Endcap / Gondola",
       width: 250,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -292,7 +337,7 @@ export default function PSR() {
     },
     {
       field: "endcapGondolaImage",
-      headerName: "Endcap Gondola Image",
+      headerName: "Endcap / Gondola Image",
       width: 200,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -323,7 +368,7 @@ export default function PSR() {
     },
     {
       field: "wetProductsHighlight",
-      headerName: "Wet Products Highlight",
+      headerName: "Highlight of wet products",
       width: 250,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -336,7 +381,7 @@ export default function PSR() {
     },
     {
       field: "wetProductsHighlightImage",
-      headerName: "Wet Products Image",
+      headerName: "Highlight of wet products Image",
       width: 200,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -411,7 +456,7 @@ export default function PSR() {
     },
     {
       field: "psrComment",
-      headerName: "PSR Comment",
+      headerName: "Comments / Feedback",
       width: 250,
       headerClassName: "bold-header",
       headerAlign: "center",
@@ -594,20 +639,20 @@ export default function PSR() {
         "Merchandiser Name",
         "Outlet",
         "User Type",
-        "Royal Canin Signage",
-        "Royal Canin Signage Image",
-        "First Brand Seen",
-        "First Brand Image",
-        "Compliance DOG",
-        "Compliance DOG Image",
-        "Compliance CAT",
-        "Compliance CAT Image",
+        "Royal Canin Outside Signage",
+        "Royal Canin Outside Signage Image",
+        "Dedicated rack for Royal Canin products, first brand seen",
+        "Dedicated rack for Royal Canin products, first brand seen Image",
+        "Compliance with DOG Planogram",
+        "Compliance with DOG Planogram Image",
+        "Compliance with CAT Planogram",
+        "Compliance with CAT Planogram Image",
         "Visibility Cashier",
         "Visibility Cashier Image",
-        "Endcap Gondola",
-        "Endcap Gondola Image",
-        "Wet Products Highlight",
-        "Wet Products Highlight Image",
+        "Endcap / Gondola",
+        "Endcap / Gondola Image",
+        "Highlight of wet products",
+        "Highlight of wet products Image",
         "Tactical Bin",
         "Tactical Bin Image",
         "PSR Comment",
