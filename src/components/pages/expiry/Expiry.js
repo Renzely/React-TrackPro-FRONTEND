@@ -114,7 +114,7 @@ export default function Expiry() {
   async function getDate(selectedDate) {
     try {
       const response = await axios.post(
-        "http://192.168.50.55:3001/filter-date-range-Expiry",
+        "https://react-rc-ugc-v2-backend.onrender.com/filter-date-range-Expiry",
         selectedDate
       );
 
@@ -155,7 +155,7 @@ export default function Expiry() {
       const branches = loggedInBranch.split(",").map((outlet) => outlet.trim());
 
       const response = await axios.post(
-        "http://192.168.50.55:3001/retrieve-expiry-data",
+        "https://react-rc-ugc-v2-backend.onrender.com/retrieve-expiry-data",
         { branches }
       );
 
@@ -206,7 +206,7 @@ export default function Expiry() {
 
     try {
       const response = await axios.post(
-        "http://192.168.50.55:3001/export-Expiry-data",
+        "https://react-rc-ugc-v2-backend.onrender.com/export-Expiry-data",
         {
           start: startDate,
           end: endDate,
