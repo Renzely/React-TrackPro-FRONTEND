@@ -184,8 +184,10 @@ export default function Admin() {
   const merchandiser = [];
 
   const outlets = [
-    "OFFICE",
-    "HEAD OFFICE",
+    "BMPOWER OFFICE",
+    "Others",
+    "RC OFFICE",
+    "RC HUB",
     "CEBU OFFICE",
     "SIARGAO",
     "Branch",
@@ -242,9 +244,9 @@ export default function Admin() {
     "A&A MULTI INC.",
     "AVT PET SUPPLIES AND ACCESSORIES TRADING",
     "CMN TRADING CORP.",
-    "DOGGIELAND PET & SUPPLIES CENTER) SAN JUA",
-    "DOGGIELAND PET & SUPPLIES CENTER) MANDALUYON",
-    "DOGGIELAND PET & SUPPLIES CENTER) CARTIMA",
+    "DOGGIELAND PET & SUPPLIES CENTER SAN JUA",
+    "DOGGIELAND PET & SUPPLIES CENTER MANDALUYON",
+    "DOGGIELAND PET & SUPPLIES CENTER CARTIMA",
     "EAGLESTAG TRADING",
     "FURRPET AGRIVET TRADING CORPORATION",
     "GING HAPPY PAWZ PETSHOP",
@@ -256,7 +258,7 @@ export default function Admin() {
     "KENSIAN PET SUPPLIES",
     "LITTLEMONSTER PET CARE SERVICES",
     "Marc & Marie Pet Grooming Services",
-    "OKIKO PEARL PHILIPPINES INC.) PASA",
+    "OKIKO PEARL PHILIPPINES INC. PASA",
     "PAWS AND BEANS PET SUPPLIES STORE",
     "PAWS N'PLAY PET CARE SERVICES",
     "PAWS WORLD PET CENTER",
@@ -265,7 +267,7 @@ export default function Admin() {
     "PETDISTRICTMNL PET SUPPLIES AND ACCESSORIES SHOP",
     "PHOENIX888 PET SUPPLIES TRADING",
     "POOCH DISTRICT PET GROOMING SALON",
-    "RONJAY GENERAL MERCHANDISE) PASA",
+    "RONJAY GENERAL MERCHANDISE PASA",
     "SEA AND LAND PET SHOP",
     "TML TRADING CORPORATION",
     "W.E PET SUPPLIES",
@@ -596,6 +598,7 @@ export default function Admin() {
       const response = await axios.post(
         "https://react-rc-ugc-v2-backend.onrender.com/get-all-user"
       );
+
       const data = response.data.data;
 
       const newData = data.map((item, key) => ({
