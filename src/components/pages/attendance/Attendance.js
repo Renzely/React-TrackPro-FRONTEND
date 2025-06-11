@@ -203,12 +203,10 @@ export default function Attendance() {
         return;
       }
 
-      // Split the logged-in branches string into an array for comparison
       const loggedInBranches = loggedInBranch
         .split(",")
         .map((branch) => branch.trim());
 
-      // Get current date formatted as dd-MM-yyyy for display
       const currentDate = new Date();
       const displayDate = `${String(currentDate.getDate()).padStart(
         2,
@@ -218,35 +216,35 @@ export default function Attendance() {
         "0"
       )}-${currentDate.getFullYear()}`;
 
-      // Process users and find their active outlet
       const processedUsers = [];
 
       for (let userIndex = 0; userIndex < data.length; userIndex++) {
         const user = data[userIndex];
 
-        // Skip specific users if needed
-        // if (user.email === "ynsonharold@gmail.com") {
-        //   continue;
-        // }
-
-        // Check if user has outlets that match admin's branches
         const userOutlets = user.outlet || [];
-        const matchingOutlets = userOutlets.filter((outlet) =>
-          loggedInBranches.some((branch) => outlet.includes(branch))
-        );
+        const matchingOutlets = userOutlets.filter((outlet) => {
+          // If admin's outlets include "Others", include all "Others: ..." entries
+          if (
+            loggedInBranches.includes("Others") &&
+            outlet.startsWith("Others:")
+          ) {
+            return true;
+          }
+
+          // Normal matching
+          return loggedInBranches.some((branch) => outlet.includes(branch));
+        });
 
         if (matchingOutlets.length === 0) {
-          continue; // Skip users with no matching outlets
+          continue;
         }
 
-        // Capitalize names
         const capitalizedNames = capitalizeWords([
           user.firstName,
           user.middleName || "",
           user.lastName,
         ]);
 
-        // Find the user's active outlet (most recent time-in)
         let activeOutletData = null;
         let latestTimeIn = null;
 
@@ -257,16 +255,15 @@ export default function Attendance() {
             currentDate
           );
 
-          // If user has timed in to this outlet
           if (attendance.hasTimedIn) {
-            // Get the actual timestamp to compare
             try {
+              // 🔥 The outlet is passed as is – backend will handle "Others" logic
               const response = await axios.get(
                 "https://react-rc-ugc-v2-backend.onrender.com/attendance/status",
                 {
                   params: {
                     email: user.email,
-                    outlet: outlet,
+                    outlet: outlet.startsWith("Others:") ? "Others" : outlet,
                     date: currentDate.toISOString().split("T")[0],
                   },
                 }
@@ -291,7 +288,6 @@ export default function Attendance() {
           }
         }
 
-        // If no active outlet found, show the first matching outlet with "No Time In"
         if (!activeOutletData) {
           const firstOutlet = matchingOutlets[0];
           const attendance = await fetchCurrentAttendance(
@@ -306,7 +302,6 @@ export default function Attendance() {
           };
         }
 
-        // Add user with their active outlet data
         processedUsers.push({
           count: processedUsers.length + 1,
           role: user.role,
@@ -318,7 +313,6 @@ export default function Attendance() {
           outlet: activeOutletData.attendance.hasTimedIn
             ? activeOutletData.outlet
             : "No Attendance",
-
           date: displayDate,
           timeIn: activeOutletData.attendance.timeIn,
           timeOut: activeOutletData.attendance.timeOut,
@@ -329,7 +323,6 @@ export default function Attendance() {
         });
       }
 
-      // Set the processed data to state
       setUserData(processedUsers);
     } catch (error) {
       console.error("Error fetching user data:", error);
