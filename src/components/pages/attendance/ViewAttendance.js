@@ -460,25 +460,31 @@ export default function ViewAttendance() {
 
   const getExportData = async () => {
     if (!dateBegin || !dateEnd) {
-      return alert("Please fill in the date fields.");
+      alert("Please fill in the date fields.");
+      return;
     }
 
-    const bDate = new Date(dateBegin.$d.setHours(0, 0, 0, 0));
-    const eDate = new Date(dateEnd.$d.setHours(23, 59, 59, 999));
+    const bDate = new Date(dateBegin.$d);
+    bDate.setHours(0, 0, 0, 0);
+
+    const eDate = new Date(dateEnd.$d);
+    eDate.setHours(23, 59, 59, 999);
 
     if (bDate > eDate) {
-      return alert("End date must be the same or later than the start date.");
+      alert("End date must be the same or later than the start date.");
+      return;
     }
 
     const startDateStr = bDate.toISOString().split("T")[0];
     const endDateStr = eDate.toISOString().split("T")[0];
 
     try {
-      const userResponse = await axios.post(
+      // Fetch all users
+      const userRes = await axios.post(
         "https://react-rc-ugc-v2-backend.onrender.com/get-all-user",
         {}
       );
-      const users = userResponse.data.data;
+      const users = userRes.data.data;
 
       const user = users.find((u) => u.email === email);
       if (!user) {
@@ -490,7 +496,8 @@ export default function ViewAttendance() {
         user.middleName ? user.middleName + " " : ""
       }${user.lastName}`;
 
-      const response = await axios.post(
+      // Fetch attendance data
+      const attendanceRes = await axios.post(
         "https://react-rc-ugc-v2-backend.onrender.com/get-attendance",
         {
           email,
@@ -499,8 +506,8 @@ export default function ViewAttendance() {
         }
       );
 
-      const allData = response.data.data;
-      if (!allData || allData.length === 0) {
+      const attendanceLogs = attendanceRes.data.data;
+      if (!attendanceLogs?.length) {
         alert("No data available for the selected dates.");
         return;
       }
@@ -510,50 +517,53 @@ export default function ViewAttendance() {
         "Merchandiser",
         "Date",
         "Time In",
-
         "Time In Location",
+        "Time In Photo",
         "Time Out",
-
         "Time Out Location",
+        "Time Out Photo",
         "Outlet",
       ];
 
-      const newData = allData.map((log, idx) => ({
+      const exportRows = attendanceLogs.map((log, idx) => ({
         count: idx + 1,
-        fullName: fullName,
-        date: formatDateTime(log.date).date || "N/A",
-        timeIn: log.timeIn ? formatDateTime(log.timeIn).time : "No Time In",
-        // timeInSelfieUrl: log.timeInSelfieUrl || "No Selfie",
-        timeInLocation: log.timeInLocation || "No location",
-        timeOut: log.timeOut ? formatDateTime(log.timeOut).time : "No Time Out",
-        // timeOutSelfieUrl: log.timeOutSelfieUrl || "No Selfie",
-        timeOutLocation: log.timeOutLocation || "No location",
-        outlet: log.outlet || "Unknown Outlet",
+        fullName,
+        date: formatDateTime(log.date)?.date ?? "N/A",
+        timeIn: log.timeIn ? formatDateTime(log.timeIn)?.time : "No Time In",
+        timeInLocation: log.timeInLocation ?? "No location",
+        timeInPhoto: log.timeInSelfieUrl ?? "",
+        timeOut: log.timeOut
+          ? formatDateTime(log.timeOut)?.time
+          : "No Time Out",
+        timeOutLocation: log.timeOutLocation ?? "No location",
+        timeOutPhoto: log.timeOutSelfieUrl ?? "",
+        outlet: log.outlet ?? "Unknown Outlet",
       }));
 
+      // Build Excel file
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet([]);
 
+      // Add headers and data
       XLSX.utils.sheet_add_aoa(ws, [headers], { origin: "A1" });
-      XLSX.utils.sheet_add_json(ws, newData, {
+      XLSX.utils.sheet_add_json(ws, exportRows, {
         origin: "A2",
         skipHeader: true,
       });
 
-      const colWidths = headers.map((header, index) => {
+      // Column widths
+      ws["!cols"] = headers.map((header, idx) => {
+        const key = Object.keys(exportRows[0])[idx];
         const maxLength = Math.max(
           header.length,
-          ...newData.map(
-            (row) => (row[Object.keys(row)[index]] || "").toString().length
-          )
+          ...exportRows.map((row) => row[key]?.toString().length || 0)
         );
         return { wch: maxLength + 2 };
       });
 
-      ws["!cols"] = colWidths;
-
-      headers.forEach((_, index) => {
-        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: index });
+      // Bold header style
+      headers.forEach((_, colIdx) => {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: colIdx });
         if (ws[cellAddress]) {
           ws[cellAddress].s = {
             font: { bold: true },
@@ -562,11 +572,12 @@ export default function ViewAttendance() {
         }
       });
 
-      newData.forEach((row, rowIndex) => {
-        Object.keys(row).forEach((_, colIndex) => {
+      // Center align all data rows
+      exportRows.forEach((_, rowIdx) => {
+        headers.forEach((_, colIdx) => {
           const cellAddress = XLSX.utils.encode_cell({
-            r: rowIndex + 1,
-            c: colIndex,
+            r: rowIdx + 1,
+            c: colIdx,
           });
           if (ws[cellAddress]) {
             ws[cellAddress].s = {
@@ -576,19 +587,19 @@ export default function ViewAttendance() {
         });
       });
 
-      XLSX.utils.book_append_sheet(wb, ws, "TrackPro-Attendance_Data");
+      XLSX.utils.book_append_sheet(wb, ws, "TrackPro-Attendance");
 
       const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
       const blob = new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
+
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `TrackPro_AttendanceData_${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
+      link.download = `TrackPro_Attendance_${startDateStr}_to_${endDateStr}.xlsx`;
       document.body.appendChild(link);
       link.click();
+      link.remove();
     } catch (error) {
       console.error("Error exporting data:", error);
       alert("Error exporting data. Please try again.");
