@@ -47,17 +47,17 @@ export default function ForgotPassword() {
 
   const handleSubmitEmail = async (event) => {
     event.preventDefault();
-    const email = event.currentTarget.email.value;
+    const emailAddress = event.currentTarget.email.value;
 
-    if (!email) {
+    if (!emailAddress) {
       Swal.fire("Unable to Proceed", "Please input your email", "warning");
       return;
     }
 
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/send-otp-forgotpassword",
-        { emailAddress: email }
+        "https://api-trackpro.bmphrc.com/send-otp-forgotpassword",
+        { emailAddress: emailAddress }
       );
       const res = response.data;
       if (res.status === 200) {
@@ -99,10 +99,7 @@ export default function ForgotPassword() {
     };
 
     axios
-      .put(
-        "https://react-rc-ugc-v2-backend.onrender.com/forgot-password-reset",
-        body
-      )
+      .put("https://api-trackpro.bmphrc.com/forgot-password-reset", body)
       .then(async (response) => {
         const res = await response.data;
         if (res.status === 200) {

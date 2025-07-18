@@ -291,7 +291,7 @@ export default function Account() {
     try {
       // Update the user's branches with the selected branches
       const response = await axios.put(
-        "https://react-rc-ugc-v2-backend.onrender.com/update-user-branch",
+        "https://api-trackpro.bmphrc.com/update-user-branch",
         {
           email: modalEmail,
           outlet: selectedBranches,
@@ -495,7 +495,7 @@ export default function Account() {
         .map((outlet) => outlet.trim());
 
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/get-all-user"
+        "https://api-trackpro.bmphrc.com/get-all-user"
       );
       const data = response.data.data;
 
@@ -541,7 +541,7 @@ export default function Account() {
 
     try {
       const response = await axios.put(
-        "https://react-rc-ugc-v2-backend.onrender.com/update-user-status",
+        "https://api-trackpro.bmphrc.com/update-user-status",
         requestBody
       );
       console.log("Response:", response.data);

@@ -201,7 +201,7 @@ export default function Competitors() {
       const branches = loggedInBranch.split(",").map((branch) => branch.trim());
 
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/retrieve-competitor-data",
+        "https://api-trackpro.bmphrc.com/retrieve-competitor-data",
         { branches }
       );
 
@@ -270,7 +270,7 @@ export default function Competitors() {
   async function getDate(selectedDate) {
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/filter-date-range-Conpetitor",
+        "https://api-trackpro.bmphrc.com/filter-date-range-Conpetitor",
         selectedDate
       );
 
@@ -325,7 +325,7 @@ export default function Competitors() {
 
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/export-competitors-data",
+        "https://api-trackpro.bmphrc.com/export-competitors-data",
         {
           start: bDate,
           end: eDate,
