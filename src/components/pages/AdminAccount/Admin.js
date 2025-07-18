@@ -144,7 +144,7 @@ export default function Admin() {
   const handleBranchSave = async (email) => {
     try {
       const response = await axios.put(
-        "https://react-rc-ugc-v2-backend.onrender.com/update-admin-outlet",
+        "https://api-trackpro.bmphrc.com/update-admin-outlet",
         {
           emailAddress: email, // Use the passed email directly
           outlet: selectedBranches,
@@ -494,7 +494,7 @@ export default function Admin() {
 
   //     // Send the emails to the backend
   //     const response = await axios.post(
-  //       "https://react-rc-ugc-v2-backend.onrender.com/update-coor-details",
+  //       "https://api-trackpro.bmphrc.com/update-coor-details",
   //       {
   //         emails: selectedEmails,
   //       }
@@ -677,7 +677,7 @@ export default function Admin() {
   async function getUser() {
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/get-all-user"
+        "https://api-trackpro.bmphrc.com/get-all-user"
       );
 
       const data = response.data.data;
@@ -703,7 +703,7 @@ export default function Admin() {
   async function getUser() {
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/get-admin-user",
+        "https://api-trackpro.bmphrc.com/get-admin-user",
         requestBody
       );
       const data = response.data.data;
@@ -731,10 +731,7 @@ export default function Admin() {
 
   async function setStatus() {
     await axios
-      .put(
-        "https://react-rc-ugc-v2-backend.onrender.com/update-admin-status",
-        requestBody
-      )
+      .put("https://api-trackpro.bmphrc.com/update-admin-status", requestBody)
       .then(async (response) => {
         const data = await response.data.data;
 
@@ -762,7 +759,7 @@ export default function Admin() {
     }
 
     await axios
-      .post("https://react-rc-ugc-v2-backend.onrender.com/send-otp", {
+      .post("https://api-trackpro.bmphrc.com/send-otp", {
         email: adminEmail,
       })
       .then(async (response) => {
@@ -820,7 +817,7 @@ export default function Admin() {
 
       axios
         .post(
-          "https://react-rc-ugc-v2-backend.onrender.com/register-user-admin",
+          "https://api-trackpro.bmphrc.com/register-user-admin",
           userDetails
         )
         .then(async (response) => {

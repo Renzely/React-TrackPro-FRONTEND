@@ -502,7 +502,7 @@ export default function PSR() {
   async function getDate(selectedDate) {
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/filter-date-range-PSR",
+        "https://api-trackpro.bmphrc.com/filter-date-range-PSR",
         selectedDate
       );
 
@@ -552,7 +552,7 @@ export default function PSR() {
       const branches = loggedInBranch.split(",").map((branch) => branch.trim());
 
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/retrieve-QTTS-data",
+        "https://api-trackpro.bmphrc.com/retrieve-QTTS-data",
         { branches }
       );
 
@@ -620,7 +620,7 @@ export default function PSR() {
 
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/export-PSR-data",
+        "https://api-trackpro.bmphrc.com/export-PSR-data",
         {
           start: startDate,
           end: endDate,

@@ -233,7 +233,7 @@ export default function VET() {
   async function getDate(selectedDate) {
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/filter-date-range-VET",
+        "https://api-trackpro.bmphrc.com/filter-date-range-VET",
         selectedDate
       );
 
@@ -270,7 +270,7 @@ export default function VET() {
       const branches = loggedInBranch.split(",").map((branch) => branch.trim());
 
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/retrieve-QTTS-data",
+        "https://api-trackpro.bmphrc.com/retrieve-QTTS-data",
         { branches }
       );
 
@@ -322,7 +322,7 @@ export default function VET() {
 
       // Send request to filter RTV data by date and branches
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/filter-RTV-data",
+        "https://api-trackpro.bmphrc.com/filter-RTV-data",
         {
           selectDate: selectedDate,
           branches,
@@ -371,7 +371,7 @@ export default function VET() {
 
     try {
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/export-VET-data",
+        "https://api-trackpro.bmphrc.com/export-VET-data",
         {
           start: bDate,
           end: eDate,

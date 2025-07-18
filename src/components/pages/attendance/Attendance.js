@@ -141,7 +141,7 @@ export default function Attendance() {
 
     try {
       const response = await axios.get(
-        "https://react-rc-ugc-v2-backend.onrender.com/attendance/status",
+        "https://api-trackpro.bmphrc.com/attendance/status",
         {
           params: {
             email: email,
@@ -190,7 +190,7 @@ export default function Attendance() {
     try {
       // Fetch the users' data
       const response = await axios.post(
-        "https://react-rc-ugc-v2-backend.onrender.com/get-all-user",
+        "https://api-trackpro.bmphrc.com/get-all-user",
         body
       );
       const data = response.data.data;
@@ -259,7 +259,7 @@ export default function Attendance() {
             try {
               // 🔥 The outlet is passed as is – backend will handle "Others" logic
               const response = await axios.get(
-                "https://react-rc-ugc-v2-backend.onrender.com/attendance/status",
+                "https://api-trackpro.bmphrc.com/attendance/status",
                 {
                   params: {
                     email: user.email,
