@@ -17,7 +17,6 @@ import {
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
-import { styled } from "@mui/material/styles";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -280,9 +279,13 @@ export default function Account() {
 
   React.useEffect(() => {
     getUser();
+
     const saved = JSON.parse(localStorage.getItem("selectedBranches"));
-    if (Array.isArray(saved)) setSelectedBranches(saved);
-  }, []);
+
+    if (Array.isArray(saved)) {
+      setSelectedBranches(saved);
+    }
+  }, [getUser]);
 
   return (
     <div className="account">
