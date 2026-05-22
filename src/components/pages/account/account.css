@@ -1,17 +1,97 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+* {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
 .account {
-  flex: 5;
-  background-color: aliceblue;
+  background-color: #f0f4f8;
+  min-height: 100vh;
 }
 
-.detailTitle {
-  font-size: 15px;
-  margin-right: 100;
+/* ── Page header ──────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.detailDescription {
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.page-subtitle {
   font-size: 13px;
-  margin-left: 100;
+  color: #94a3b8;
+  margin: 4px 0 0;
 }
-.bold-header .MuiDataGrid-columnHeaderTitle {
-  font-weight: bold;
+
+/* ── Stats row ────────────────────────────────── */
+.stats-row {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 20px;
+  border: 1px solid #e8ecf0;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  min-width: 160px;
+  flex: 1;
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+/* ── Filter row ───────────────────────────────── */
+.filter-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* ── Bold header (legacy compat) ──────────────── */
+.bold-header {
+  font-weight: 700 !important;
+  background-color: #f8fafc !important;
+  color: #374151 !important;
+  text-transform: uppercase !important;
+  font-size: 12px !important;
+  letter-spacing: 0.5px !important;
 }

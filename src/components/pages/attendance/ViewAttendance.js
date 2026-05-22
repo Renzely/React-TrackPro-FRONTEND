@@ -1,16 +1,11 @@
+import "./attendance.css";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
-import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarExport,
-  GridToolbar,
-} from "@mui/x-data-grid";
-import { Box, Typography, Button, Stack } from "@mui/material";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { Box, Typography, Button, Stack, Chip } from "@mui/material";
 import Topbar from "../../topbar/Topbar";
 import Sidebar from "../../sidebar/Sidebar";
-import { format, utcToZonedTime } from "date-fns-tz";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -23,149 +18,102 @@ import { Marker, Popup } from "react-leaflet";
 import MapIcon from "@mui/icons-material/Map";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import Modal from "@mui/material/Modal";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
+const mapModalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 480,
+  height: 440,
+  bgcolor: "#fff",
+  borderRadius: "16px",
+  boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+  p: 2,
+  overflow: "hidden",
+};
+
+const photoModalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 420,
+  bgcolor: "#fff",
+  borderRadius: "16px",
+  boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+  p: 2,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 2,
+};
 
 export default function ViewAttendance() {
-  const [outlet, setOutlet] = useState("");
   const location = useLocation();
   const [attendanceData, setAttendanceData] = useState([]);
-  const [dateBegin, setDateBegin] = React.useState(null);
-  const [dateEnd, setDateEnd] = React.useState(null);
-  const [sheetData, setSheetData] = React.useState(null);
-  const [fullName, setFullName] = useState("");
-  const [isVisible, setIsVisible] = useState(false); // Default is false (hidden)
-  const handleClose = () => setOpen(false);
-  const handleOpen = () => setOpen(true);
-  const [open, setOpen] = React.useState(false);
-  const [openPhotoModal, setOpenPhotoModal] = React.useState(false);
-  const [selectedPhotoUrl, setSelectedPhotoUrl] = React.useState("");
-  const [latitude, setLatitude] = React.useState();
-  const [longitude, setLongitude] = React.useState();
-  const [city, setCity] = React.useState();
-  const [street, setStreet] = React.useState();
+  const [dateBegin, setDateBegin] = useState(null);
+  const [dateEnd, setDateEnd] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [openPhotoModal, setOpenPhotoModal] = useState(false);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState("");
+  const [latitude, setLatitude] = useState();
+  const [longitude, setLongitude] = useState();
+  const [city, setCity] = useState();
+  const [street, setStreet] = useState();
+  const [loading, setLoading] = useState(false);
   const XLSX = require("sheetjs-style");
 
   const email = location.state?.email || "";
-  const [loading, setLoading] = useState(false);
 
   const formatDateTime = (dateTime, hasTimedIn = false) => {
     if (!dateTime) return hasTimedIn ? "No Time In" : "No Time Out";
-
-    // Parse the input string to Date object (assumed to be in local PH time already)
     const dateObj = new Date(dateTime);
-
-    // Format date (e.g., 30-05-2025)
     const day = String(dateObj.getDate()).padStart(2, "0");
     const month = String(dateObj.getMonth() + 1).padStart(2, "0");
     const year = dateObj.getFullYear();
     const formattedDate = `${day}-${month}-${year}`;
-
-    // Format time in 12-hour format with AM/PM
     let hours = dateObj.getHours();
     const minutes = String(dateObj.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
-
-    const formattedTime = `${hours}:${minutes} ${ampm}`;
-
-    return { date: formattedDate, time: formattedTime };
+    return { date: formattedDate, time: `${hours}:${minutes} ${ampm}` };
   };
 
-  const capitalizeWords = (words) => {
-    if (!words || !Array.isArray(words)) return [];
-
-    return words.map((word) =>
-      word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : ""
-    );
-  };
-
-  // Fetch attendance data for the specific user
-  async function fetchAttendanceData(email, outlet, currentDate = new Date()) {
-    // Format date as YYYY-MM-DD for the backend
-    const formattedDate = currentDate.toISOString().split("T")[0];
-
-    try {
-      const response = await axios.get(
-        "https://api-trackpro.bmphrc.com/attendance/status",
-        {
-          params: {
-            email: email,
-            outlet: outlet,
-            date: formattedDate,
-          },
-        }
-      );
-
-      const data = response.data;
-
-      return {
-        hasTimedIn: data.hasTimedIn,
-        hasTimedOut: data.hasTimedOut,
-        timeIn: data.timeInTimestamp
-          ? formatDateTime(data.timeInTimestamp)
-          : "No Time In",
-        timeOut: data.timeOutTimestamp
-          ? formatDateTime(data.timeOutTimestamp)
-          : "No Time Out",
-        addressTimeIn: data.addressTimeIn,
-        addressTimeOut: data.addressTimeOut,
-      };
-    } catch (error) {
-      console.error("Error fetching attendance:", error);
-      return {
-        hasTimedIn: false,
-        hasTimedOut: false,
-        timeIn: "No Time In",
-        timeOut: "No Time Out",
-        addressTimeIn: null,
-        addressTimeOut: null,
-      };
-    }
-  }
-
-  // New function to fetch all attendance records for table display
   async function fetchAllAttendanceData(
     email,
     startDate = null,
-    endDate = null
+    endDate = null,
   ) {
     setLoading(true);
     try {
       const requestBody = {
-        email: email,
+        email,
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
       };
-
       const response = await axios.post(
         "https://api-trackpro.bmphrc.com/get-attendance",
-        requestBody
+        requestBody,
       );
-
       if (response.data.success) {
-        // The backend now returns flattened data, so we can use it directly
         const formattedData = response.data.data.map((record, index) => ({
           ...record,
-          id: index + 1, // For DataGrid
-          email: email, // You'll need to get this from somewhere
-          // Format the time fields for display
+          id: index + 1,
+          email,
           timeIn: record.timeIn
             ? formatDateTime(record.timeIn).time
             : "No Time In",
           timeOut: record.timeOut
             ? formatDateTime(record.timeOut).time
             : "No Time Out",
-          // Format the date for display
           date: record.date ? formatDateTime(record.date).date : "Unknown Date",
         }));
-
         setAttendanceData(formattedData);
-        console.log("Formatted attendance data:", formattedData);
       } else {
-        console.error(
-          "Failed to fetch attendance data:",
-          response.data.message
-        );
         setAttendanceData([]);
       }
     } catch (error) {
@@ -176,342 +124,253 @@ export default function ViewAttendance() {
     }
   }
 
-  // Updated useEffect to fetch all attendance data when email changes
   useEffect(() => {
-    if (email) {
-      // Fetch status for specific outlet if needed
-      if (outlet) {
-        fetchAttendanceData(email, outlet);
-      }
-
-      // Fetch all attendance data for table display
-      fetchAllAttendanceData(email);
-    }
-  }, [email, outlet]);
-
-  const columns = [
-    {
-      field: "count",
-      headerName: "#",
-      width: 100,
-      headerClassName: "bold-header",
-    },
-    {
-      field: "email",
-      headerName: "EMAIL",
-      width: 220,
-      headerClassName: "bold-header",
-    },
-    {
-      field: "date",
-      headerName: "DATE",
-      width: 120,
-      headerClassName: "bold-header",
-    },
-    {
-      field: "timeIn", // This will show formatted time
-      headerName: "TIME IN",
-      width: 100,
-      headerClassName: "bold-header",
-    },
-    {
-      field: "timeInSelfieUrl",
-      headerName: "TIME IN PHOTO",
-      width: 120,
-      headerClassName: "bold-header",
-      renderCell: (params) => {
-        const selfieUrl = params.row.timeInSelfieUrl;
-
-        return (
-          <Stack style={{ marginTop: 10, alignItems: "center" }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => {
-                if (selfieUrl) {
-                  handleOpenPhotoModal(selfieUrl);
-                } else {
-                  alert("Selfie not available");
-                }
-              }}
-              sx={{
-                backgroundColor: "#0A21C0",
-                "&:hover": {
-                  backgroundColor: "#091359",
-                },
-                cursor: selfieUrl ? "pointer" : "not-allowed",
-              }}
-            >
-              {selfieUrl ? <VisibilityIcon /> : <VisibilityOffIcon />}
-            </Button>
-          </Stack>
-        );
-      },
-    },
-    {
-      field: "timeInLocation",
-      headerName: "TIME IN LOCATION",
-      headerAlign: "center",
-      width: 150,
-      headerClassName: "bold-header",
-      renderCell: (params) => {
-        const onClick = async () => {
-          const currentRow = params.row;
-
-          // Use timeInCoordinates
-          const userLatitude = currentRow.timeInCoordinates?.latitude;
-          const userLongitude = currentRow.timeInCoordinates?.longitude;
-
-          // Validate coordinates before making the API request
-          if (!userLatitude || !userLongitude) {
-            console.error("Invalid coordinates:", {
-              userLatitude,
-              userLongitude,
-            });
-            alert(
-              "Unable to retrieve location. Coordinates are missing or invalid."
-            );
-            return;
-          }
-
-          const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLatitude}&lon=${userLongitude}`;
-
-          try {
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.error) {
-              console.error("Error from OpenStreetMap:", data.error);
-              alert("Unable to geocode the provided coordinates.");
-              return;
-            }
-
-            // Handle the successful response
-            console.log(data);
-            setCity(data.address.city || "Unknown City");
-            setStreet(data.address.road || "Unknown Street");
-            setLatitude(userLatitude);
-            setLongitude(userLongitude);
-            handleOpen();
-          } catch (error) {
-            console.error("Error fetching location:", error);
-            alert("Unable to fetch location. Please try again.");
-          }
-        };
-
-        const isCoordinatesAvailable =
-          params.row.timeInCoordinates?.latitude &&
-          params.row.timeInCoordinates?.longitude;
-
-        return (
-          <Stack style={{ marginTop: 10, alignItems: "center" }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={onClick}
-              disabled={!isCoordinatesAvailable}
-              sx={{
-                backgroundColor: "#0A21C0",
-                "&:hover": {
-                  backgroundColor: "#091359",
-                },
-                cursor: isCoordinatesAvailable ? "pointer" : "not-allowed",
-              }}
-            >
-              <MapIcon />
-            </Button>
-          </Stack>
-        );
-      },
-    },
-    {
-      field: "timeOut", // This will show formatted time
-      headerName: "TIME OUT",
-      width: 120,
-      headerClassName: "bold-header",
-    },
-    {
-      field: "timeOutSelfieUrl",
-      headerName: "TIME OUT PHOTO",
-      width: 150,
-      headerClassName: "bold-header",
-      renderCell: (params) => {
-        const timeOutSelfieUrl = params.row.timeOutSelfieUrl;
-
-        return (
-          <Stack style={{ marginTop: 10, alignItems: "center" }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => {
-                if (timeOutSelfieUrl) {
-                  handleOpenPhotoModal(timeOutSelfieUrl);
-                } else {
-                  alert("Selfie not available");
-                }
-              }}
-              sx={{
-                backgroundColor: "#0A21C0",
-                "&:hover": {
-                  backgroundColor: "#091359",
-                },
-                cursor: timeOutSelfieUrl ? "pointer" : "not-allowed",
-              }}
-            >
-              {timeOutSelfieUrl ? <VisibilityIcon /> : <VisibilityOffIcon />}
-            </Button>
-          </Stack>
-        );
-      },
-    },
-    {
-      field: "timeOutLocation",
-      headerName: "TIME OUT LOCATION",
-      width: 150,
-      headerClassName: "bold-header",
-      headerAlign: "center",
-      renderCell: (params) => {
-        const onClick = async () => {
-          const currentRow = params.row;
-
-          const userLatitude = currentRow.timeOutCoordinates?.latitude;
-          const userLongitude = currentRow.timeOutCoordinates?.longitude;
-
-          // Validate coordinates before making the API request
-          if (!userLatitude || !userLongitude) {
-            console.error("Invalid coordinates:", {
-              userLatitude,
-              userLongitude,
-            });
-            alert(
-              "Unable to retrieve location. Coordinates are missing or invalid."
-            );
-            return;
-          }
-
-          const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLatitude}&lon=${userLongitude}`;
-
-          try {
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.error) {
-              console.error("Error from OpenStreetMap:", data.error);
-              alert("Unable to geocode the provided coordinates.");
-              return;
-            }
-
-            // Handle the successful response
-            console.log(data);
-            setCity(data.address.city || "Unknown City");
-            setStreet(data.address.road || "Unknown Street");
-            setLatitude(userLatitude);
-            setLongitude(userLongitude);
-            handleOpen();
-          } catch (error) {
-            console.error("Error fetching location:", error);
-            alert("Unable to fetch location. Please try again.");
-          }
-        };
-
-        // Determine cursor style based on the availability of coordinates
-        const isCoordinatesAvailable =
-          params.row.timeOutCoordinates?.latitude &&
-          params.row.timeOutCoordinates?.longitude;
-
-        return (
-          <Stack style={{ marginTop: 10, alignItems: "center" }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={onClick}
-              disabled={!isCoordinatesAvailable}
-              sx={{
-                backgroundColor: "#0A21C0",
-                "&:hover": {
-                  backgroundColor: "#091359",
-                },
-                cursor: isCoordinatesAvailable ? "pointer" : "not-allowed",
-              }}
-            >
-              <MapIcon />
-            </Button>
-          </Stack>
-        );
-      },
-    },
-    {
-      field: "outlet",
-      headerName: "OUTLET",
-      width: 400,
-      headerClassName: "bold-header",
-    },
-  ];
+    if (email) fetchAllAttendanceData(email);
+  }, [email]);
 
   const handleOpenPhotoModal = (photoUrl) => {
     setSelectedPhotoUrl(photoUrl);
     setOpenPhotoModal(true);
   };
 
-  const handleClosePhotoModal = () => {
-    setOpenPhotoModal(false);
-    setSelectedPhotoUrl("");
+  const openMapModal = async (coords) => {
+    const { latitude: lat, longitude: lon } = coords;
+    if (!lat || !lon) {
+      alert("Coordinates unavailable.");
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+      );
+      const data = await res.json();
+      if (data.error) {
+        alert("Unable to geocode.");
+        return;
+      }
+      setCity(data.address.city || "Unknown City");
+      setStreet(data.address.road || "Unknown Street");
+      setLatitude(lat);
+      setLongitude(lon);
+      setOpen(true);
+    } catch {
+      alert("Unable to fetch location.");
+    }
   };
+
+  const actionBtn = (icon, color, onClick, disabled) => (
+    <Button
+      variant="contained"
+      size="small"
+      onClick={onClick}
+      disabled={disabled}
+      sx={{
+        backgroundColor: disabled ? "#e0e0e0" : color,
+        color: disabled ? "#aaa" : "#fff",
+        minWidth: 36,
+        width: 36,
+        height: 32,
+        borderRadius: "8px",
+        boxShadow: "none",
+        padding: 0,
+        "&:hover": {
+          backgroundColor: disabled ? "#e0e0e0" : color,
+          boxShadow: "none",
+          opacity: 0.88,
+        },
+      }}
+    >
+      {icon}
+    </Button>
+  );
+
+  const columns = [
+    {
+      field: "count",
+      headerName: "#",
+      width: 60,
+      headerClassName: "tp-header",
+    },
+    {
+      field: "email",
+      headerName: "Email",
+      width: 200,
+      headerClassName: "tp-header",
+    },
+    {
+      field: "date",
+      headerName: "Date",
+      width: 110,
+      headerClassName: "tp-header",
+    },
+    {
+      field: "timeIn",
+      headerName: "Time In",
+      width: 100,
+      headerClassName: "tp-header",
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          size="small"
+          sx={{
+            backgroundColor:
+              params.value === "No Time In" ? "#f5f5f5" : "#e3f8ff",
+            color: params.value === "No Time In" ? "#aaa" : "#0077b6",
+            fontWeight: 500,
+            fontSize: 12,
+          }}
+        />
+      ),
+    },
+    {
+      field: "timeInSelfieUrl",
+      headerName: "In Photo",
+      width: 90,
+      headerClassName: "tp-header",
+      renderCell: (params) => {
+        const url = params.row.timeInSelfieUrl;
+        return (
+          <Stack direction="row" alignItems="center" sx={{ mt: 0.5 }}>
+            {actionBtn(
+              url ? (
+                <VisibilityIcon sx={{ fontSize: 16 }} />
+              ) : (
+                <VisibilityOffIcon sx={{ fontSize: 16 }} />
+              ),
+              "#0aafeb",
+              () => (url ? handleOpenPhotoModal(url) : alert("No selfie")),
+              !url,
+            )}
+          </Stack>
+        );
+      },
+    },
+    {
+      field: "timeInLocation",
+      headerName: "In Map",
+      width: 80,
+      headerClassName: "tp-header",
+      renderCell: (params) => {
+        const coords = params.row.timeInCoordinates;
+        const avail = coords?.latitude && coords?.longitude;
+        return (
+          <Stack direction="row" alignItems="center" sx={{ mt: 0.5 }}>
+            {actionBtn(
+              <MapIcon sx={{ fontSize: 16 }} />,
+              "#0aafeb",
+              () => openMapModal(coords),
+              !avail,
+            )}
+          </Stack>
+        );
+      },
+    },
+    {
+      field: "timeOut",
+      headerName: "Time Out",
+      width: 100,
+      headerClassName: "tp-header",
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          size="small"
+          sx={{
+            backgroundColor:
+              params.value === "No Time Out" ? "#f5f5f5" : "#fff0f3",
+            color: params.value === "No Time Out" ? "#aaa" : "#c9184a",
+            fontWeight: 500,
+            fontSize: 12,
+          }}
+        />
+      ),
+    },
+    {
+      field: "timeOutSelfieUrl",
+      headerName: "Out Photo",
+      width: 90,
+      headerClassName: "tp-header",
+      renderCell: (params) => {
+        const url = params.row.timeOutSelfieUrl;
+        return (
+          <Stack direction="row" alignItems="center" sx={{ mt: 0.5 }}>
+            {actionBtn(
+              url ? (
+                <VisibilityIcon sx={{ fontSize: 16 }} />
+              ) : (
+                <VisibilityOffIcon sx={{ fontSize: 16 }} />
+              ),
+              "#c9184a",
+              () => (url ? handleOpenPhotoModal(url) : alert("No selfie")),
+              !url,
+            )}
+          </Stack>
+        );
+      },
+    },
+    {
+      field: "timeOutLocation",
+      headerName: "Out Map",
+      width: 80,
+      headerClassName: "tp-header",
+      renderCell: (params) => {
+        const coords = params.row.timeOutCoordinates;
+        const avail = coords?.latitude && coords?.longitude;
+        return (
+          <Stack direction="row" alignItems="center" sx={{ mt: 0.5 }}>
+            {actionBtn(
+              <MapIcon sx={{ fontSize: 16 }} />,
+              "#c9184a",
+              () => openMapModal(coords),
+              !avail,
+            )}
+          </Stack>
+        );
+      },
+    },
+    {
+      field: "outlet",
+      headerName: "Branch",
+      width: 320,
+      headerClassName: "tp-header",
+    },
+  ];
 
   const getExportData = async () => {
     if (!dateBegin || !dateEnd) {
       alert("Please fill in the date fields.");
       return;
     }
-
     const bDate = new Date(dateBegin.$d);
     bDate.setHours(0, 0, 0, 0);
-
     const eDate = new Date(dateEnd.$d);
     eDate.setHours(23, 59, 59, 999);
-
     if (bDate > eDate) {
-      alert("End date must be the same or later than the start date.");
+      alert("End date must be the same or later than start date.");
       return;
     }
-
     const startDateStr = bDate.toISOString().split("T")[0];
     const endDateStr = eDate.toISOString().split("T")[0];
-
     try {
-      // Fetch all users
       const userRes = await axios.post(
         "https://api-trackpro.bmphrc.com/get-all-user",
-        {}
+        {},
       );
       const users = userRes.data.data;
-
       const user = users.find((u) => u.email === email);
       if (!user) {
         alert("User not found.");
         return;
       }
-
-      const fullName = `${user.firstName} ${
-        user.middleName ? user.middleName + " " : ""
-      }${user.lastName}`;
-
-      // Fetch attendance data
+      const fullName = `${user.firstName}${user.middleName ? " " + user.middleName : ""} ${user.lastName}`;
       const attendanceRes = await axios.post(
         "https://api-trackpro.bmphrc.com/get-attendance",
-        {
-          email,
-          startDate: startDateStr,
-          endDate: endDateStr,
-        }
+        { email, startDate: startDateStr, endDate: endDateStr },
       );
-
-      const attendanceLogs = attendanceRes.data.data;
-      if (!attendanceLogs?.length) {
-        alert("No data available for the selected dates.");
+      const logs = attendanceRes.data.data;
+      if (!logs?.length) {
+        alert("No data for selected dates.");
         return;
       }
-
       const headers = [
         "#",
         "Merchandiser",
@@ -524,8 +383,7 @@ export default function ViewAttendance() {
         "Time Out Photo",
         "Outlet",
       ];
-
-      const exportRows = attendanceLogs.map((log, idx) => ({
+      const exportRows = logs.map((log, idx) => ({
         count: idx + 1,
         fullName,
         date: formatDateTime(log.date)?.date ?? "N/A",
@@ -539,70 +397,42 @@ export default function ViewAttendance() {
         timeOutPhoto: log.timeOutSelfieUrl ?? "",
         outlet: log.outlet ?? "Unknown Outlet",
       }));
-
-      // Build Excel file
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet([]);
-
-      // Add headers and data
       XLSX.utils.sheet_add_aoa(ws, [headers], { origin: "A1" });
       XLSX.utils.sheet_add_json(ws, exportRows, {
         origin: "A2",
         skipHeader: true,
       });
-
-      // Column widths
-      ws["!cols"] = headers.map((header, idx) => {
-        const key = Object.keys(exportRows[0])[idx];
-        const maxLength = Math.max(
-          header.length,
-          ...exportRows.map((row) => row[key]?.toString().length || 0)
+      ws["!cols"] = headers.map((h, i) => {
+        const key = Object.keys(exportRows[0])[i];
+        const max = Math.max(
+          h.length,
+          ...exportRows.map((r) => r[key]?.toString().length || 0),
         );
-        return { wch: maxLength + 2 };
+        return { wch: max + 2 };
       });
-
-      // Bold header style
-      headers.forEach((_, colIdx) => {
-        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: colIdx });
-        if (ws[cellAddress]) {
-          ws[cellAddress].s = {
+      headers.forEach((_, c) => {
+        const addr = XLSX.utils.encode_cell({ r: 0, c });
+        if (ws[addr])
+          ws[addr].s = {
             font: { bold: true },
             alignment: { horizontal: "center", vertical: "center" },
           };
-        }
       });
-
-      // Center align all data rows
-      exportRows.forEach((_, rowIdx) => {
-        headers.forEach((_, colIdx) => {
-          const cellAddress = XLSX.utils.encode_cell({
-            r: rowIdx + 1,
-            c: colIdx,
-          });
-          if (ws[cellAddress]) {
-            ws[cellAddress].s = {
-              alignment: { horizontal: "center", vertical: "center" },
-            };
-          }
-        });
-      });
-
       XLSX.utils.book_append_sheet(wb, ws, "TrackPro-Attendance");
-
       const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
       const blob = new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
-
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `TrackPro_Attendance_${startDateStr}_to_${endDateStr}.xlsx`;
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (error) {
-      console.error("Error exporting data:", error);
-      alert("Error exporting data. Please try again.");
+    } catch {
+      alert("Error exporting data.");
     }
   };
 
@@ -614,149 +444,136 @@ export default function ViewAttendance() {
         <Box
           sx={{
             flexGrow: 1,
-            padding: { xs: "10px", sm: "20px" },
-            maxWidth: "100%",
-            overflow: "auto",
-            backgroundColor: "#003554", // Background color from attendance.js
+            padding: { xs: "16px", sm: "24px" },
+            backgroundColor: "#f0f4f8",
+            minHeight: "calc(100vh - 58px)",
           }}
         >
+          {/* Page header */}
+          <div className="page-header">
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => window.history.back()}
+                sx={{
+                  borderRadius: "10px",
+                  textTransform: "none",
+                  borderColor: "#d1d5db",
+                  color: "#374151",
+                  fontSize: 13,
+                }}
+              >
+                Back
+              </Button>
+              <div>
+                <h1 className="page-title">Attendance History</h1>
+                <p className="page-subtitle">{email}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Export controls */}
           <Box
             sx={{
               display: "flex",
               flexWrap: "wrap",
               gap: 2,
-              marginBottom: 3,
+              alignItems: "center",
+              backgroundColor: "#fff",
+              borderRadius: "14px",
+              padding: "16px 20px",
+              border: "1px solid #e8ecf0",
+              marginBottom: "20px",
+              boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
             }}
           >
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 label="Start Date"
-                onChange={(newValue) => setDateBegin(newValue)}
+                onChange={(v) => setDateBegin(v)}
                 slotProps={{
                   textField: {
                     size: "small",
-                    sx: { backgroundColor: "white" }, // Set background color to white
+                    sx: {
+                      backgroundColor: "#f8fafc",
+                      borderRadius: "10px",
+                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                    },
                   },
                 }}
               />
               <DatePicker
                 label="End Date"
-                onChange={(newValue) => setDateEnd(newValue)}
+                onChange={(v) => setDateEnd(v)}
                 slotProps={{
                   textField: {
                     size: "small",
-                    sx: { backgroundColor: "white" }, // Set background color to white
+                    sx: {
+                      backgroundColor: "#f8fafc",
+                      borderRadius: "10px",
+                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                    },
                   },
                 }}
               />
             </LocalizationProvider>
-
             <Button
               onClick={getExportData}
               variant="contained"
+              startIcon={<FileDownloadIcon />}
               sx={{
-                backgroundColor: "#0A21C0",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#091359",
-                },
+                backgroundColor: "#0aafeb",
+                color: "#fff",
+                borderRadius: "10px",
+                textTransform: "none",
+                fontWeight: 600,
+                boxShadow: "none",
+                "&:hover": { backgroundColor: "#0096c7", boxShadow: "none" },
               }}
             >
-              Export
+              Export to Excel
             </Button>
           </Box>
 
-          {/* Photo Modal */}
-          <Modal
-            open={openPhotoModal}
-            onClose={handleClosePhotoModal}
-            aria-labelledby="photo-modal-title"
-            aria-describedby="photo-modal-description"
-          >
-            <Box
-              sx={{
-                ...style,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              {selectedPhotoUrl ? (
-                <img
-                  src={selectedPhotoUrl}
-                  alt="Time In Photo"
-                  style={{ maxWidth: "100%", maxHeight: "100%" }}
-                />
-              ) : (
-                <Typography variant="h6" align="center">
-                  No photo available.
-                </Typography>
-              )}
-            </Box>
-          </Modal>
-
-          {/* Map Modal */}
-          <Modal
-            open={open}
-            onClose={handleClose}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <Box sx={style}>
-              <div className="leaflet-container">
-                <MapContainer
-                  center={[latitude, longitude]}
-                  zoom={17}
-                  scrollWheelZoom={false}
-                  style={{ height: "400px", width: "100%" }}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  <Marker
-                    position={[latitude, longitude]}
-                    icon={
-                      new Icon({
-                        iconUrl: markerIconPng,
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41],
-                      })
-                    }
-                  >
-                    <Popup>
-                      {city}, <br /> {street}
-                    </Popup>
-                  </Marker>
-                </MapContainer>
-              </div>
-            </Box>
-          </Modal>
-
-          {/* Attendance Data Table */}
+          {/* Table */}
           <Box
             sx={{
-              height: "100%",
-              width: "100%",
-              maxHeight: "80vh",
-              marginTop: 2,
+              backgroundColor: "#fff",
+              borderRadius: "16px",
               overflow: "hidden",
+              border: "1px solid #e8ecf0",
+              boxShadow: "0 1px 8px rgba(0,0,0,0.05)",
               "& .MuiDataGrid-root": {
-                backgroundColor: "#fff",
+                border: "none",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              },
+              "& .tp-header": {
+                backgroundColor: "#f8fafc",
+                color: "#374151",
+                fontWeight: 700,
+                fontSize: 12,
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+              },
+              "& .MuiDataGrid-row:hover": { backgroundColor: "#f0f8ff" },
+              "& .MuiDataGrid-cell": { borderColor: "#f0f4f8" },
+              "& .MuiDataGrid-columnSeparator": { display: "none" },
+              "& .MuiDataGrid-toolbarContainer": {
+                padding: "12px 16px",
+                borderBottom: "1px solid #f0f4f8",
               },
             }}
           >
             <DataGrid
               rows={attendanceData}
               columns={columns}
+              loading={loading}
               initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize: 10 },
-                },
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
               }}
-              slots={{
-                toolbar: GridToolbar,
-              }}
+              slots={{ toolbar: GridToolbar }}
               slotProps={{
                 toolbar: {
                   showQuickFilter: true,
@@ -770,23 +587,94 @@ export default function ViewAttendance() {
               disableColumnFilter
               disableColumnSelector
               disableRowSelectionOnClick
+              sx={{ minHeight: 400 }}
             />
           </Box>
+
+          {/* Photo Modal */}
+          <Modal open={openPhotoModal} onClose={() => setOpenPhotoModal(false)}>
+            <Box sx={photoModalStyle}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 600,
+                  color: "#374151",
+                  alignSelf: "flex-start",
+                }}
+              >
+                Selfie Photo
+              </Typography>
+              {selectedPhotoUrl ? (
+                <img
+                  src={selectedPhotoUrl}
+                  alt="Selfie"
+                  style={{
+                    width: "100%",
+                    borderRadius: 10,
+                    maxHeight: 360,
+                    objectFit: "contain",
+                  }}
+                />
+              ) : (
+                <Typography color="text.secondary">
+                  No photo available.
+                </Typography>
+              )}
+              <Button
+                onClick={() => setOpenPhotoModal(false)}
+                variant="outlined"
+                size="small"
+                sx={{
+                  alignSelf: "center",
+                  borderRadius: "10px",
+                  textTransform: "none",
+                }}
+              >
+                Close
+              </Button>
+            </Box>
+          </Modal>
+
+          {/* Map Modal */}
+          <Modal open={open} onClose={() => setOpen(false)}>
+            <Box sx={mapModalStyle}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600, color: "#374151", marginBottom: 1 }}
+              >
+                📍 {city}, {street}
+              </Typography>
+              {latitude && longitude && (
+                <MapContainer
+                  center={[latitude, longitude]}
+                  zoom={17}
+                  scrollWheelZoom={false}
+                  style={{ height: "360px", width: "100%", borderRadius: 10 }}
+                >
+                  <TileLayer
+                    attribution="&copy; OpenStreetMap contributors"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker
+                    position={[latitude, longitude]}
+                    icon={
+                      new Icon({
+                        iconUrl: markerIconPng,
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                      })
+                    }
+                  >
+                    <Popup>
+                      {city}, {street}
+                    </Popup>
+                  </Marker>
+                </MapContainer>
+              )}
+            </Box>
+          </Modal>
         </Box>
       </Box>
     </div>
   );
 }
-
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  height: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};

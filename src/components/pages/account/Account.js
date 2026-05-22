@@ -2,13 +2,8 @@ import "./account.css";
 import * as React from "react";
 import Topbar from "../../topbar/Topbar";
 import Sidebar from "../../sidebar/Sidebar";
-import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarExport,
-  GridToolbar,
-} from "@mui/x-data-grid";
-import axios, { isAxiosError } from "axios";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import axios from "axios";
 import {
   Checkbox,
   Button,
@@ -17,470 +12,206 @@ import {
   MenuItem,
   Select,
   FormControl,
-  InputLabel,
+  Chip,
 } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
-import { Link } from "react-router-dom";
 import { styled } from "@mui/material/styles";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { useDemoData } from "@mui/x-data-grid-generator";
-import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Autocomplete } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
-
-function CustomToolbar() {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarExport />
-    </GridToolbarContainer>
-  );
-}
+const BRANCHES = [
+  "BMPOWER OFFICE",
+  "Others",
+  "RC OFFICE",
+  "RC HUB",
+  "CEBU OFFICE",
+  "SIARGAO",
+  "Branch",
+  "UGC Tanay",
+  "UGC Pasig City",
+  "UGC Calamba",
+  "UGC Pampanga",
+  "UGC Davao",
+  "UGC Lucena",
+  "UGC Bicol",
+  "UGC Tacloban",
+  "UGC Pangasinan",
+  "HOME",
+];
 
 export default function Account() {
-  const { data, loading } = useDemoData({
-    dataSet: "Commodity",
-    rowLength: 4,
-    maxColumns: 6,
-  });
-
   const [userData, setUserData] = React.useState([]);
-  const [selectedRoles, setselectedRoles] = React.useState("");
+  const [selectedRoles, setSelectedRoles] = React.useState("");
   const [openModal, setOpenModal] = React.useState(false);
-  const handleOpen = () => setOpenModal(true);
-  const handleClose = () => setOpenModal(false);
-
   const [updateStatus, setUpdateStatus] = React.useState(true);
   const [userEmail, setUserEmail] = React.useState("");
-
-  var test = "testing";
-
-  const requestBody = { isActivate: updateStatus, emailAddress: userEmail };
-
   const [modalFullName, setModalFullName] = React.useState("");
   const [modalBranch, setModalBranch] = React.useState("");
   const [modalEmail, setModalEmail] = React.useState("");
   const [modalPhone, setModalPhone] = React.useState("");
-
   const [openDialog, setOpenDialog] = React.useState(false);
-  const roleAccount = localStorage.getItem("roleAccount"); // Get roleAccount from localStorage
+  const [selectedBranches, setSelectedBranches] = React.useState([]);
+  const roleAccount = localStorage.getItem("roleAccount");
   const allowedRoles = [
     "ACCOUNT SUPERVISOR",
     "OPERATION OFFICER",
     "OPERATION HEAD",
     "COORDINATOR",
   ];
-  const isAllowed = allowedRoles.includes(roleAccount); // Check if role is allowed
-
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
-  const [branches, setBranches] = React.useState([
-    "BMPOWER OFFICE",
-    "Others",
-    "RC OFFICE",
-    "RC HUB",
-    "CEBU OFFICE",
-    "SIARGAO",
-    "Branch",
-    "UGC Tanay",
-    "UGC Pasig City",
-    "UGC Calamba",
-    "UGC Pampanga",
-    "UGC Davao",
-    "UGC Lucena",
-    "UGC Bicol",
-    "UGC Tacloban",
-    "UGC Pangasinan",
-    "HOME",
-    "ABBY PET FOOD SHOP",
-    "ACMC ENTERPRISES OPC",
-    "ANGELS PET SUPPLIES",
-    "CELLARIS PET SHOP AND SUPPLIES",
-    "CHOI PET SHOP",
-    "CORIX PET SUPPLIES",
-    "DOODIES PET SHOP",
-    "DOODIES PET SHOP",
-    "FIRST SOMACO MARKETING INC.",
-    "FOUR-LEGGED FRIENDS, INC.",
-    "FURCO CONSUMER GOODS TRADING",
-    "FURPET'S-CHOICE PET STORE",
-    "FURRY-POP PET SUPPLIES AND ACCESSORIES SHOP",
-    "GLAM GROOMS PET CARE SERVICES",
-    "GOLDEN 3 PET SUPPLIES & GROOMING STATION",
-    "GRINSY PETSHOP",
-    "I PAW U PET CARE SERVICES",
-    "JMPVC PET STORE",
-    "JZJ PET TRADING CORP.",
-    "M&H PET SUPPLIES AND ACCESSORIES SHOP",
-    "MCPET PET CARE SERVICES",
-    "METROPAWLITAN INC.",
-    "MIGHTY-WAGGERS PET SUPPLIES AND ACCESSORIES",
-    "MR DOODIES PET SUPPLIES AND ACCESSORIES TRADING",
-    "NGIKNGIKANDFRIENDS PET SUPPLIES",
-    "PAMPAO PET FOOD STORE",
-    "PAWPAWLAND PET PARK",
-    "PET BLVD. GROOMING & SHOPPING CENTRE INC",
-    "PET CULTURE PET SUPPLIES",
-    "PET STYLERS MANILA OPC",
-    "PETKINGDOM PET STATION",
-    "R&D PAW STORE PET SUPPLIES",
-    "TAIL TALES PET STORE",
-    "TOB & TUB DOG FOOD AND ACCESSORIES SHOP",
-    "URBAN TAILS INC.",
-    "VERMILLION TAILS PET GROOMING SERVICES",
-    "WINWINZ CONSUMER GOODS TRADING",
-    "YK FUR FRIENDS INC.",
-    "ZILVER PET STORE",
-    "102 PET SHOP",
-    "A&A MULTI INC.",
-    "AVT PET SUPPLIES AND ACCESSORIES TRADING",
-    "CMN TRADING CORP.",
-    "DOGGIELAND PET & SUPPLIES CENTER SAN JUA",
-    "DOGGIELAND PET & SUPPLIES CENTER MANDALUYON",
-    "DOGGIELAND PET & SUPPLIES CENTER CARTIMA",
-    "EAGLESTAG TRADING",
-    "FURRPET AGRIVET TRADING CORPORATION",
-    "GING HAPPY PAWZ PETSHOP",
-    "GOTFISH PET SHOP",
-    "HAPPY PAW PET GUILD INCORPORATED",
-    "HAPPY'S PET SUPPLIES AND ACCESSORIES SHOP",
-    "HIGH FIVE PET SUPPLIES INC.",
-    "KAP'S TRADING CORPORATION",
-    "KENSIAN PET SUPPLIES",
-    "LITTLEMONSTER PET CARE SERVICES",
-    "Marc & Marie Pet Grooming Services",
-    "OKIKO PEARL PHILIPPINES INC. PASA",
-    "PAWS AND BEANS PET SUPPLIES STORE",
-    "PAWS N'PLAY PET CARE SERVICES",
-    "PAWS WORLD PET CENTER",
-    "PAWSHOPPE BY BIYAYA PET GROOMING SERVICES",
-    "PET UMBRELLA INC.",
-    "PETDISTRICTMNL PET SUPPLIES AND ACCESSORIES SHOP",
-    "PHOENIX888 PET SUPPLIES TRADING",
-    "POOCH DISTRICT PET GROOMING SALON",
-    "RONJAY GENERAL MERCHANDISE PASA",
-    "SEA AND LAND PET SHOP",
-    "TML TRADING CORPORATION",
-    "W.E PET SUPPLIES",
-    "POOCH PARK MAKATI CIRCUIT",
-    "DATC SERENDRA",
-    "DATC UPTOWN BGC",
-    "DATC THE FORT",
-    "DATC ALABANG",
-    "DATC MCKINLEY VENICE",
-    "PET CORNER VENICE",
-    "THE GOLDEN FUR - MAKATI",
-    "PETTOMART - AYALA",
-    "PET EXPRESS SM BICUTAN DEPT. STORE",
-    "PET EXPRESS SM AURA",
-    "PET EXPRESS SM MAKATI",
-    "DOG CITY SUCAT",
-    "JAMJAM PETSHOP",
-    "ZEALOUS TRADING - MAKATI",
-    "POOCH PARK MARKET MARKET",
-    "ANIMAL HOUSE MARKET MARKET",
-    "A-Z ANIMAL WELLNESS UPTOWN, BGC",
-    "VIP FORT",
-    "BETERENARYO SA FORT",
-    "PCBP ANIMAL HOSPITAL",
-    "ANIMAL HOUSE MAKATI",
-    "CHRISHER VET. - MAKATI",
-    "FIL - CHI PASONG TAMO",
-    "AREVALO KALAYAAN",
-    "PANOTXA OPC.",
-    "ANIMAL HOUSE BICUTAN",
-    "ANGELES PETCARE - SUCAT",
-    "NUVETUS MARKETING -SUCAT",
-    "NUVETUS MARKETING - MAKATI",
-    "MAKATI ANIMAL MED. CENTER",
-    "ANIMAL HOUSE WESTGATE",
-    "VIP ALABANG",
-    "ANIMAL HOUSE ALABANG",
-    "CHRISHER VET. - ALABANG",
-    "EWA VET.",
-    "(2000038) CABANLIG DOG & CAT CLINIC",
-    "(2000058) ETC DRUGSTORE",
-    "(2000133) EV DOG & CAT CLINIC",
-    "(2000143) JPK VETERINARY CLINIC",
-    "(2000177) ST. AUGUSTINE VETERINARY CLINIC & SUPPLIES",
-    "(2000182) St. Joseph Veterinary Clinic  and Supplies Co.",
-    "(2000201) RMG Veterinary Clinic & Grooming Center",
-    "(2000205) Ormanes Veterinary Clinic",
-    "(2000208) Northeast Animal Clinic",
-    "(2000219) Good Shepherd Animal Clinic",
-    "(2000222) South Paws Animal Clinic",
-    "(2000223) ESC Veterinary Clinic",
-    "(2000227) Diwa Veterinary Clinic",
-    "(2000258) 3 J's Pet Camp",
-    "(2000263) PET CRADLE VETERINARY CLINIC",
-    "(2000292) PURR PAWS VETERINARY AND TRADING INC.",
-    "(2000299) PET MOBILE CORPORATION",
-    "(2000312) BBM GREAT AND SMALL ANIMAL CLINIC",
-    "(2000366) ABH ANIMAL HEALTH CLINIC - MAKATI",
-    "(2000468) PAWSITIVE VETERINARY CLINIC",
-    "(2000472) KRUHAY ANIMAL CLINIC",
-    "(2000481) M.D.C VETERINARY SERVICES",
-    "(2000512) GOLDEN BUNCH VETERINARY CLINIC",
-    "(2000530) FAMILY PET CARE VETERINARY CLINIC",
-    "(2000562) PET HIVE VETERINARY CLINIC",
-    "(2000567) THE FURR PROJECT ANIMAL CLINIC & VET PHARMACY CORP",
-    "(2000584) NUVETUS MARKETING",
-    "(2000597) PET MEDICS VETERINARY CLINIC",
-    "(2000598) NEW ALABANG VETERINARY CENTER INC.",
-    "(2000599) VETSURE ANIMAL CLINIC AND SUPPLIES INC.",
-    "(2000616) Vetsaroundtown Veterinary Services",
-    "(2000626) REALE FURR BABIES PET CARE SERVICES",
-    "(2000714) PAWCKETFUL VETERINARY CLINIC",
-    "(2000778) BUBBLE BERRY ZHI AI CHONG VETERINARY CLINIC",
-    "(2000803) HEALTHY TAILS VETERINARY SERVICES",
-    "(2000855) MICHAELLA VETERINARY CLINIC",
-    "(2000878) ST. DWYN ANIMAL CLINIC",
-    "(2000920) SANTIVETPH ANIMAL CLINIC",
-    "(2000940) PERALTA VETERINARY CENTER INC",
-    "(2000980) CREATURE AND CRITTERS ANIMAL CLINIC",
-    "PAWS AND PARTNERS",
-    "VETPOINT. INC",
-    "MOUNT SINAI",
-    "CENSIG VET.",
-    "JACOBE VET.",
-  ]); //Branches
-
-  const handleRoleChange = (event) => {
-    setselectedRoles(event.target.value);
-  };
+  const isAllowed = allowedRoles.includes(roleAccount);
 
   const filteredData =
     selectedRoles === "" || selectedRoles === "UNFILTERED"
       ? userData
-      : userData.filter((user) => user.role === selectedRoles);
+      : userData.filter((u) => u.role === selectedRoles);
 
-  // State for the second modal
-  const [openBranchModal, setOpenBranchModal] = React.useState(false);
-  const handleOpenBranchModal = () => setOpenBranchModal(true);
-  const handleCloseBranchModal = () => setOpenBranchModal(false);
-
-  // State for selected branches
-  const [selectedBranches, setSelectedBranches] = React.useState([]);
-
-  // Update the branch of the user with the selected branches
-  // Update the branch of the user with the selected branches
-  const handleBranchSave = async () => {
-    try {
-      // Update the user's branches with the selected branches
-      const response = await axios.put(
-        "https://api-trackpro.bmphrc.com/update-user-branch",
-        {
-          email: modalEmail,
-          outlet: selectedBranches,
-        }
-      );
-
-      // Update the branch field in the userData state
-      const updatedUserData = userData.map((user) => {
-        if (user.email === modalEmail) {
-          return {
-            ...user,
-            Branch: selectedBranches.join(", "), // Update the Branch field
-          };
-        }
-        return user;
-      });
-
-      setUserData(updatedUserData); // Set the updated userData state
-
-      // After successful update, you might want to refresh the user data
-      getUser();
-      setTimeout(() => window.location.reload(), 1000);
-      handleCloseBranchModal(); // Close the branch selection modal after saving
-    } catch (error) {
-      console.error("Error updating user branches:", error);
-    }
-  };
+  const activeCount = userData.filter((u) => u.isActive).length;
 
   const capitalizeWords = (words) => {
     if (!words || !Array.isArray(words)) return [];
-
-    return words.map((word) =>
-      word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : ""
+    return words.map((w) =>
+      w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "",
     );
   };
 
   const columns = [
-    { field: "count", headerName: "#", width: 75 },
+    {
+      field: "count",
+      headerName: "#",
+      width: 60,
+      headerClassName: "tp-header",
+    },
     {
       field: "firstName",
-      headerName: "FIRST NAME",
-      width: 150,
-      headerClassName: "bold-header",
+      headerName: "First Name",
+      width: 130,
+      headerClassName: "tp-header",
     },
     {
       field: "middleName",
-      headerName: "MIDDLE NAME",
-      width: 150,
-      headerClassName: "bold-header",
+      headerName: "Middle Name",
+      width: 130,
+      headerClassName: "tp-header",
     },
     {
       field: "lastName",
-      headerName: "LAST NAME",
-      width: 150,
-      headerClassName: "bold-header",
+      headerName: "Last Name",
+      width: 130,
+      headerClassName: "tp-header",
     },
     {
       field: "emailAddress",
-      headerName: "EMAIL ADDRESS",
+      headerName: "Email",
       width: 200,
-      headerClassName: "bold-header",
+      headerClassName: "tp-header",
     },
     {
       field: "role",
-      headerName: "CLIENT",
-      width: 150,
-      headerClassName: "bold-header",
+      headerName: "Client",
+      width: 120,
+      headerClassName: "tp-header",
     },
     {
       field: "contactNum",
-      headerName: "CONTACT NUMBER",
-      width: 200,
-      headerClassName: "bold-header",
+      headerName: "Contact",
+      width: 140,
+      headerClassName: "tp-header",
     },
     {
       field: "outlet",
-      headerName: "OUTLETS",
-      width: 300,
-      headerClassName: "bold-header",
+      headerName: "Outlets",
+      width: 260,
+      headerClassName: "tp-header",
+      renderCell: (params) => {
+        const val = Array.isArray(params.value)
+          ? params.value.join(", ")
+          : params.value || "";
+        return <span style={{ fontSize: 12, color: "#555" }}>{val}</span>;
+      },
     },
     {
       field: "isActive",
-      headerName: "STATUS",
-      headerClassName: "bold-header",
-      width: 150,
-      sortable: false,
-      disableClickEventBubbling: true,
-
+      headerName: "Status",
+      headerClassName: "tp-header",
+      width: 120,
       renderCell: (params) => {
         const status = params.row.isActive;
-        const rowEmail = params.row.emailAddress;
-        const roleAccount = localStorage.getItem("roleAccount"); // Get role from localStorage
-
-        const onClick = (e) => {
-          if (allowedRoles.includes(roleAccount)) {
-            setUpdateStatus(params.row.isActive ? false : true); // Set status based on current state
-            setUserEmail(params.row.emailAddress);
-            handleOpenDialog(); // Open the dialog
-          }
+        const onClick = () => {
+          if (!isAllowed) return;
+          setUpdateStatus(!status);
+          setUserEmail(params.row.emailAddress);
+          setOpenDialog(true);
         };
-
         return (
-          <>
-            {status ? (
-              <Stack>
-                <ColorButton
-                  variant="contained"
-                  size="small"
-                  style={{
-                    width: "50%",
-                    marginTop: "13px",
-                    backgroundColor: "#0A21C0",
-                    color: "#FFFFFF",
-                  }}
-                  onClick={onClick}
-                  disabled={!isAllowed}
-                >
-                  Active
-                </ColorButton>
-              </Stack>
-            ) : (
-              <Stack>
-                <Button
-                  variant="contained"
-                  color="error"
-                  size="small"
-                  style={{ width: "50%", marginTop: "13px" }}
-                  onClick={onClick}
-                  disabled={!isAllowed}
-                >
-                  Inactive
-                </Button>
-              </Stack>
-            )}
-          </>
+          <Chip
+            label={status ? "Active" : "Inactive"}
+            size="small"
+            icon={
+              status ? (
+                <CheckCircleIcon sx={{ fontSize: 14 }} />
+              ) : (
+                <CancelIcon sx={{ fontSize: 14 }} />
+              )
+            }
+            onClick={onClick}
+            sx={{
+              backgroundColor: status ? "#e6f9f0" : "#fff0f3",
+              color: status ? "#059669" : "#c9184a",
+              fontWeight: 600,
+              fontSize: 11,
+              cursor: isAllowed ? "pointer" : "default",
+              border: `1px solid ${status ? "#a7f3d0" : "#fecdd3"}`,
+              "& .MuiChip-icon": { color: status ? "#059669" : "#c9184a" },
+            }}
+          />
         );
       },
     },
     {
       field: "action",
-      headerClassName: "bold-header",
-      headerName: "ACTION",
+      headerName: "Details",
+      headerClassName: "tp-header",
       width: 90,
-      sortable: false,
-      disableClickEventBubbling: true,
-
       renderCell: (params) => {
-        const onClick = (e) => {
-          let mFullname = params.row.firstName + " " + params.row.lastName;
-          let condition = params.row.middleName;
-          let mOutlet = params.row.outlet;
-          let mEmail = params.row.emailAddress;
-          let mPhone = params.row.contactNum;
-          if (condition === "Null") {
-            mFullname = params.row.firstName + " " + params.row.lastName;
-          } else {
-            mFullname =
-              params.row.firstName +
-              " " +
-              params.row.middleName +
-              " " +
-              params.row.lastName;
-          }
-
-          setModalFullName(mFullname);
-          setModalBranch(mOutlet);
-          setModalEmail(mEmail);
-          setModalPhone(mPhone);
-
-          return handleOpen();
+        const onClick = () => {
+          const m = params.row.middleName;
+          const fn =
+            m && m !== "Null"
+              ? `${params.row.firstName} ${m} ${params.row.lastName}`
+              : `${params.row.firstName} ${params.row.lastName}`;
+          setModalFullName(fn);
+          setModalBranch(params.row.outlet);
+          setModalEmail(params.row.emailAddress);
+          setModalPhone(params.row.contactNum);
+          setOpenModal(true);
         };
-
         return (
-          <Stack>
-            <Button
-              variant="contained"
-              size="small"
-              color="primary"
-              onClick={onClick}
-              style={{
-                width: "50%",
-                marginTop: "13px",
-                backgroundColor: "#0A21C0",
-                color: "#FFFFFF",
-              }}
-            >
-              <PersonIcon />
-            </Button>
-          </Stack>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={onClick}
+            sx={{
+              backgroundColor: "#0aafeb",
+              color: "#fff",
+              borderRadius: "8px",
+              boxShadow: "none",
+              minWidth: 36,
+              textTransform: "none",
+              "&:hover": { backgroundColor: "#0096c7", boxShadow: "none" },
+            }}
+          >
+            <PersonIcon sx={{ fontSize: 16 }} />
+          </Button>
         );
       },
     },
@@ -488,42 +219,33 @@ export default function Account() {
 
   async function getUser() {
     try {
-      const loggedInBranch = localStorage.getItem("outlet");
-
-      const loggedInBranches = loggedInBranch
-        .split(",")
-        .map((outlet) => outlet.trim());
-
+      const loggedInBranch = localStorage.getItem("outlet") || "";
+      const loggedInBranches = loggedInBranch.split(",").map((o) => o.trim());
       const response = await axios.post(
-        "https://api-trackpro.bmphrc.com/get-all-user"
+        "https://api-trackpro.bmphrc.com/get-all-user",
       );
       const data = response.data.data;
-
-      const filteredData = data.filter((item) => {
-        return loggedInBranches.some((outlet) => item.outlet?.includes(outlet));
-      });
-
-      const newData = filteredData.map((data, key) => {
-        const capitalizedNames = capitalizeWords([
-          data.firstName,
-          data.middleName || "",
-          data.lastName,
+      const filteredData = data.filter((item) =>
+        loggedInBranches.some((o) => item.outlet?.includes(o)),
+      );
+      const newData = filteredData.map((d, key) => {
+        const names = capitalizeWords([
+          d.firstName,
+          d.middleName || "",
+          d.lastName,
         ]);
-
         return {
           count: key + 1,
-          role: data.role,
-          outlet: data.outlet,
-          firstName: capitalizedNames[0],
-          middleName: capitalizedNames[1] || "Null",
-          lastName: capitalizedNames[2],
-          username: data.username,
-          emailAddress: data.email, // now using `email` from updated schema
-          contactNum: data.contactNumber, // now using `contactNumber`
-          isActive: data.isVerified, // now using `isVerified`
+          role: d.role,
+          outlet: d.outlet,
+          firstName: names[0],
+          middleName: names[1] || "Null",
+          lastName: names[2],
+          emailAddress: d.email,
+          contactNum: d.contactNumber,
+          isActive: d.isVerified,
         };
       });
-
       setUserData(newData);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -531,49 +253,36 @@ export default function Account() {
   }
 
   async function setStatus() {
-    // Use the states you’ve already set: userEmail and updateStatus
-    const requestBody = {
-      email: userEmail,
-      isVerified: updateStatus, // true or false
-    };
-
-    console.log("Sending data:", requestBody);
-
     try {
       const response = await axios.put(
         "https://api-trackpro.bmphrc.com/update-user-status",
-        requestBody
+        { email: userEmail, isVerified: updateStatus },
       );
-      console.log("Response:", response.data);
-
-      if (response.data.status === 200) {
-        // Update local data if needed, e.g., update userData state
-        window.location.reload(); // Or better: update userData directly instead of reload
-      } else {
-        console.error("Update failed:", response.data.data);
-        alert("Failed to update status: " + response.data.data);
-      }
+      if (response.data.status === 200) window.location.reload();
     } catch (error) {
-      console.error("Error:", error.response?.data || error.message);
-      alert("Error occurred: " + error.message);
+      console.error("Error:", error);
     }
   }
 
+  const handleBranchSave = async () => {
+    try {
+      await axios.put("https://api-trackpro.bmphrc.com/update-user-branch", {
+        email: modalEmail,
+        outlet: selectedBranches,
+      });
+      getUser();
+      setTimeout(() => window.location.reload(), 800);
+      setOpenModal(false);
+    } catch (error) {
+      console.error("Error updating branches:", error);
+    }
+  };
+
   React.useEffect(() => {
     getUser();
-
-    // Load the selected branches from localStorage if available
-    const savedBranches = JSON.parse(localStorage.getItem("selectedBranches"));
-    if (Array.isArray(savedBranches)) {
-      setSelectedBranches(savedBranches); // Pre-select outlets based on saved branches
-    }
-  }, []); // Only run on mount
-
-  const handleChange = (event, newValue) => {
-    setSelectedBranches(newValue);
-    // Save selected outlets to localStorage
-    localStorage.setItem("selectedBranches", JSON.stringify(newValue));
-  };
+    const saved = JSON.parse(localStorage.getItem("selectedBranches"));
+    if (Array.isArray(saved)) setSelectedBranches(saved);
+  }, []);
 
   return (
     <div className="account">
@@ -583,58 +292,110 @@ export default function Account() {
         <Box
           sx={{
             flexGrow: 1,
-            padding: { xs: "10px", sm: "20px" },
-            maxWidth: "100%",
-            overflow: "auto",
-            backgroundColor: "#003554",
+            padding: { xs: "16px", sm: "24px" },
+            backgroundColor: "#f0f4f8",
+            minHeight: "calc(100vh - 58px)",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            {/* Dropdown */}
-            <FormControl sx={{ width: 200 }}>
+          {/* Page header */}
+          <div className="page-header">
+            <div>
+              <h1 className="page-title">Accounts</h1>
+              <p className="page-subtitle">Manage field personnel accounts</p>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="stats-row">
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: "#e3f8ff" }}>
+                <PeopleAltIcon sx={{ color: "#0aafeb", fontSize: 22 }} />
+              </div>
+              <div>
+                <div className="stat-value">{userData.length}</div>
+                <div className="stat-label">Total Accounts</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: "#e6f9f0" }}>
+                <CheckCircleIcon sx={{ color: "#059669", fontSize: 22 }} />
+              </div>
+              <div>
+                <div className="stat-value">{activeCount}</div>
+                <div className="stat-label">Active</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: "#fff0f3" }}>
+                <CancelIcon sx={{ color: "#c9184a", fontSize: 22 }} />
+              </div>
+              <div>
+                <div className="stat-value">
+                  {userData.length - activeCount}
+                </div>
+                <div className="stat-label">Inactive</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter */}
+          <div className="filter-row">
+            <FormControl size="small" sx={{ minWidth: 200 }}>
               <Select
                 value={selectedRoles}
-                onChange={handleRoleChange}
+                onChange={(e) => setSelectedRoles(e.target.value)}
                 displayEmpty
-                sx={{ backgroundColor: "white" }}
+                sx={{
+                  backgroundColor: "#fff",
+                  borderRadius: "10px",
+                  fontSize: 13,
+                }}
               >
                 <MenuItem value="" disabled>
-                  Select Client
+                  Filter by Client
                 </MenuItem>
-                <MenuItem value="UNFILTERED">UNFILTERED</MenuItem>
-                <MenuItem value="RC">RC SALES AGENT</MenuItem>
-                <MenuItem value="UGC">UGC PERSONNEL</MenuItem>
+                <MenuItem value="UNFILTERED">All Clients</MenuItem>
+                <MenuItem value="RC">RC Sales Agent</MenuItem>
+                <MenuItem value="UGC">UGC Personnel</MenuItem>
                 <MenuItem value="BMP">BMPOWER</MenuItem>
               </Select>
             </FormControl>
-          </Box>
-          {/* Responsive DataGrid */}
+          </div>
+
+          {/* Table */}
           <Box
             sx={{
-              height: "100%",
-              width: "100%",
-              maxHeight: "80vh",
-              marginTop: 2,
-              overflow: "auto",
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              overflow: "hidden",
+              border: "1px solid #e8ecf0",
+              boxShadow: "0 1px 8px rgba(0,0,0,0.05)",
               "& .MuiDataGrid-root": {
-                backgroundColor: "#fff",
+                border: "none",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              },
+              "& .tp-header": {
+                backgroundColor: "#f8fafc",
+                color: "#374151",
+                fontWeight: 700,
+                fontSize: 12,
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+              },
+              "& .MuiDataGrid-row:hover": { backgroundColor: "#f0f8ff" },
+              "& .MuiDataGrid-cell": { borderColor: "#f0f4f8" },
+              "& .MuiDataGrid-columnSeparator": { display: "none" },
+              "& .MuiDataGrid-toolbarContainer": {
+                padding: "12px 16px",
+                borderBottom: "1px solid #f0f4f8",
               },
             }}
           >
             <DataGrid
-              //rows={userData}
               rows={filteredData}
               columns={columns}
               initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize: 10 },
-                },
-                columns: {
-                  columnVisibilityModel: {
-                    address: false,
-                    phone: false,
-                  },
-                },
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
               }}
               slots={{ toolbar: GridToolbar }}
               slotProps={{
@@ -651,96 +412,94 @@ export default function Account() {
               pageSizeOptions={[5, 10, 20, 50, 100]}
               getRowId={(row) => row.count}
               disableRowSelectionOnClick
+              sx={{ minHeight: 400 }}
             />
           </Box>
 
-          {/* Responsive Modal */}
-          <Modal
-            open={openModal}
-            onClose={handleCloseDialog}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
+          {/* Detail Modal */}
+          <Modal open={openModal} onClose={() => setOpenModal(false)}>
             <Box
               sx={{
-                padding: 4,
-                backgroundColor: "white",
-                margin: { xs: "10% auto", md: "5% auto" },
-                width: { xs: "90%", sm: "70%", md: "50%" },
-                maxHeight: "80vh",
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: { xs: "92%", sm: 500 },
+                maxHeight: "88vh",
                 overflowY: "auto",
-                boxShadow: 24,
-                borderRadius: 2,
+                backgroundColor: "#fff",
+                borderRadius: "20px",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+                p: 3,
               }}
             >
-              <Typography id="modal-modal-title" variant="h6" component="h2">
-                Full Details
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, color: "#0f172a", mb: 0.5 }}
+              >
+                Account Details
               </Typography>
-              <Stack spacing={3} sx={{ mt: 2 }}>
-                {/* Display Full Details */}
+              <Typography variant="body2" sx={{ color: "#94a3b8", mb: 2.5 }}>
+                {modalEmail}
+              </Typography>
+              <Stack spacing={2}>
                 <TextField
                   label="Full Name"
-                  id="modal-full-name"
-                  defaultValue={modalFullName}
-                  InputProps={{
-                    readOnly: true,
-                  }}
+                  value={modalFullName}
+                  InputProps={{ readOnly: true }}
+                  size="small"
                   fullWidth
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
                 <TextField
                   label="Email"
-                  id="modal-email"
-                  defaultValue={modalEmail}
-                  InputProps={{
-                    readOnly: true,
-                  }}
+                  value={modalEmail}
+                  InputProps={{ readOnly: true }}
+                  size="small"
                   fullWidth
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
                 <TextField
                   label="Contact Number"
-                  id="modal-phone"
-                  defaultValue={modalPhone}
-                  InputProps={{
-                    readOnly: true,
-                  }}
+                  value={modalPhone}
+                  InputProps={{ readOnly: true }}
+                  size="small"
                   fullWidth
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
-
                 <TextField
-                  label="Outlet"
-                  id="modal-outlets"
+                  label="Current Outlets"
                   value={
                     Array.isArray(modalBranch)
-                      ? modalBranch.join(", ") // Join selected branches as a comma-separated string
-                      : modalBranch || "" // Handle null/undefined cases
+                      ? modalBranch.join(", ")
+                      : modalBranch || ""
                   }
-                  InputProps={{
-                    readOnly: true,
-                  }}
+                  InputProps={{ readOnly: true }}
+                  size="small"
                   fullWidth
+                  multiline
+                  rows={2}
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
-
-                {/* Dropdown for selecting branches */}
                 <Autocomplete
                   multiple
-                  id="branches-autocomplete"
-                  options={[...new Set(branches)]}
-                  value={selectedBranches} // Bind the selected outlets to value
-                  onChange={handleChange}
                   disableCloseOnSelect
-                  filterOptions={(options, { inputValue }) => {
-                    return options.filter((option) =>
-                      option.toLowerCase().includes(inputValue.toLowerCase())
-                    );
+                  options={[...new Set(BRANCHES)]}
+                  value={selectedBranches}
+                  onChange={(e, v) => {
+                    setSelectedBranches(v);
+                    localStorage.setItem("selectedBranches", JSON.stringify(v));
                   }}
-                  getOptionLabel={(option) => option}
-                  isOptionEqualToValue={(option, value) => option === value}
+                  getOptionLabel={(o) => o}
+                  isOptionEqualToValue={(o, v) => o === v}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      variant="outlined"
-                      label="Select Outlet"
-                      placeholder="Select Outlet"
+                      label="Select Outlets"
+                      size="small"
+                      sx={{
+                        "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                      }}
                     />
                   )}
                   renderOption={(props, option, { selected }) => (
@@ -750,110 +509,102 @@ export default function Account() {
                     </li>
                   )}
                 />
-                {/* Buttons for selecting/removing all outlets */}
-                <Stack direction="row" spacing={2} justifyContent="center">
+                <Stack direction="row" spacing={1.5}>
                   <Button
-                    onClick={() => setSelectedBranches(branches)}
-                    variant="outlined"
+                    onClick={() => setSelectedBranches(BRANCHES)}
+                    variant="contained"
+                    size="small"
                     sx={{
-                      backgroundColor: "#0A21C0",
-                      color: "#FFFFFF",
-                      borderColor: "FFFFFF",
-                      "&:hover": { backgroundColor: "#0A21C0" },
+                      flex: 1,
+                      backgroundColor: "#0aafeb",
+                      borderRadius: "10px",
+                      textTransform: "none",
+                      boxShadow: "none",
                     }}
                   >
                     Select All
                   </Button>
                   <Button
                     onClick={() => setSelectedBranches([])}
-                    variant="outlined"
+                    variant="contained"
+                    size="small"
                     sx={{
-                      backgroundColor: "#A31D1D",
-                      color: "rgb(255, 255, 255)",
-                      borderColor: "FFFFFF",
-                      "&:hover": { backgroundColor: "#A31D1D" },
+                      flex: 1,
+                      backgroundColor: "#ef4444",
+                      borderRadius: "10px",
+                      textTransform: "none",
+                      boxShadow: "none",
                     }}
                   >
-                    Remove All
+                    Clear All
                   </Button>
                 </Stack>
-
-                {/* Save Outlet Changes Button */}
                 <Button
-                  onClick={() => handleBranchSave(modalEmail)}
+                  onClick={handleBranchSave}
                   variant="contained"
                   sx={{
-                    backgroundColor: "#0A21C0",
-                    color: "#FFFFFF",
-                    "&:hover": { backgroundColor: "#0A21C0" },
+                    backgroundColor: "#0aafeb",
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "#0096c7",
+                      boxShadow: "none",
+                    },
                   }}
                 >
                   Save Outlet Changes
                 </Button>
-
-                {/* Buttons for closing the modal */}
-                <DialogActions sx={{ justifyContent: "space-between" }}>
-                  <Button onClick={handleClose}>Close</Button>
-                </DialogActions>
+                <Button
+                  onClick={() => setOpenModal(false)}
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    borderColor: "#e2e8f0",
+                    color: "#64748b",
+                  }}
+                >
+                  Close
+                </Button>
               </Stack>
             </Box>
           </Modal>
 
-          {/* Branch Selection Dialog */}
-          <Dialog
-            open={openBranchModal}
-            onClose={handleCloseBranchModal}
-            aria-labelledby="branch-dialog-title"
-            aria-describedby="branch-dialog-description"
-            fullWidth
-            maxWidth="md"
-          >
-            <DialogTitle id="branch-dialog-title">Select Branch</DialogTitle>
-            <DialogContent>
-              <Autocomplete
-                multiple
-                id="branches-autocomplete"
-                options={branches}
-                defaultValue={selectedBranches}
-                onChange={(event, value) => setSelectedBranches(value)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    label="Select Branch"
-                    placeholder="Select Branch"
-                  />
-                )}
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseBranchModal}>Cancel</Button>
-              <Button onClick={handleBranchSave} autoFocus>
-                Save
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          {/* Account Activation Dialog */}
+          {/* Status Dialog */}
           <Dialog
             open={openDialog}
-            onClose={handleCloseDialog}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
+            onClose={() => setOpenDialog(false)}
+            PaperProps={{ sx: { borderRadius: "16px" } }}
           >
-            <DialogTitle id="alert-dialog-title">
-              Account Activation
+            <DialogTitle sx={{ fontWeight: 700 }}>
+              Change Account Status
             </DialogTitle>
             <DialogContent>
-              <DialogContentText id="alert-dialog-description">
+              <DialogContentText>
                 {updateStatus
-                  ? "Are you sure you want to set this user as active?"
-                  : "Are you sure you want to set this user as inactive?"}
+                  ? "Set this account to Active?"
+                  : "Set this account to Inactive?"}
               </DialogContentText>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button onClick={setStatus} autoFocus>
+            <DialogActions sx={{ padding: "12px 20px" }}>
+              <Button
+                onClick={() => setOpenDialog(false)}
+                sx={{ textTransform: "none", borderRadius: "8px" }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={setStatus}
+                variant="contained"
+                sx={{
+                  backgroundColor: "#0aafeb",
+                  textTransform: "none",
+                  borderRadius: "8px",
+                  boxShadow: "none",
+                }}
+              >
                 Confirm
               </Button>
             </DialogActions>
@@ -863,11 +614,3 @@ export default function Account() {
     </div>
   );
 }
-
-const ColorButton = styled(Button)(({ theme }) => ({
-  color: "#000",
-  backgroundColor: "#F6FAB9",
-  "&:hover": {
-    backgroundColor: "#CAE6B2",
-  },
-}));

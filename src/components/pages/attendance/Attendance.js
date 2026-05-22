@@ -3,55 +3,36 @@ import * as React from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
 import {
-  Checkbox,
   Button,
   Stack,
-  TextField,
   MenuItem,
   Select,
   FormControl,
-  InputLabel,
+  Chip,
 } from "@mui/material";
-import Typography from "@mui/material/Typography";
-import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import { Link } from "react-router-dom";
 import Topbar from "../../topbar/Topbar";
 import Sidebar from "../../sidebar/Sidebar";
-import { format } from "date-fns";
-
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 const formatDateTime = (dateTime) => {
   if (!dateTime) return null;
-
   const dateObj = new Date(dateTime);
-
-  // Format the time in 12-hour h:mm AM/PM format
   const hours = dateObj.getHours() % 12 || 12;
   const minutes = String(dateObj.getMinutes()).padStart(2, "0");
   const ampm = dateObj.getHours() >= 12 ? "PM" : "AM";
-
   return `${hours}:${minutes} ${ampm}`;
 };
 
 export default function Attendance() {
   const [userData, setUserData] = React.useState([]);
   const [selectedRoles, setSelectedRoles] = React.useState("");
-  const body = { test: "test" };
-  const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const [loading, setLoading] = React.useState(true);
+
   const handleRoleChange = (event) => {
     setSelectedRoles(event.target.value);
   };
@@ -61,98 +42,131 @@ export default function Attendance() {
       ? userData
       : userData.filter((user) => user.role === selectedRoles);
 
+  const timedInCount = userData.filter((u) => u.hasTimedIn).length;
+  const timedOutCount = userData.filter((u) => u.hasTimedOut).length;
+
   const columns = [
     {
       field: "count",
       headerName: "#",
-      width: 75,
-      headerClassName: "bold-header",
+      width: 60,
+      headerClassName: "tp-header",
     },
     {
       field: "fullName",
-      headerName: "FULL NAME",
-      width: 200,
-      headerClassName: "bold-header",
+      headerName: "Full Name",
+      width: 190,
+      headerClassName: "tp-header",
     },
     {
       field: "outlet",
-      headerName: "OUTLET",
+      headerName: "Branch",
       width: 180,
-      headerClassName: "bold-header",
+      headerClassName: "tp-header",
+      renderCell: (params) => (
+        <span
+          style={{
+            fontSize: 13,
+            color: params.value === "No Attendance" ? "#aaa" : "#222",
+          }}
+        >
+          {params.value}
+        </span>
+      ),
     },
     {
       field: "date",
-      headerName: "DATE",
-      width: 150,
-      headerClassName: "bold-header",
+      headerName: "Date",
+      width: 120,
+      headerClassName: "tp-header",
     },
     {
       field: "timeIn",
-      headerName: "TIME IN",
-      width: 150,
-      headerClassName: "bold-header",
+      headerName: "Time In",
+      width: 110,
+      headerClassName: "tp-header",
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          size="small"
+          sx={{
+            backgroundColor:
+              params.value === "No Time In" ? "#f5f5f5" : "#e3f8ff",
+            color: params.value === "No Time In" ? "#aaa" : "#0077b6",
+            fontWeight: 500,
+            fontSize: 12,
+            border: "none",
+          }}
+        />
+      ),
     },
     {
       field: "timeOut",
-      headerName: "TIME OUT",
-      width: 150,
-      headerClassName: "bold-header",
+      headerName: "Time Out",
+      width: 110,
+      headerClassName: "tp-header",
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          size="small"
+          sx={{
+            backgroundColor:
+              params.value === "No Time Out" ? "#f5f5f5" : "#fff0f3",
+            color: params.value === "No Time Out" ? "#aaa" : "#c9184a",
+            fontWeight: 500,
+            fontSize: 12,
+            border: "none",
+          }}
+        />
+      ),
     },
     {
       field: "action",
-      headerName: "ATTENDANCE HISTORY",
-      headerClassName: "bold-header",
-      width: 180,
+      headerName: "History",
+      headerClassName: "tp-header",
+      width: 130,
       sortable: false,
-      disableClickEventBubbling: true,
-      renderCell: (params) => {
-        return (
-          <Stack style={{ marginTop: 0, alignItems: "center" }}>
-            <Link
-              to="/view-attendance"
-              state={{ email: params.row.email }}
-              style={{ textDecoration: "none" }}
-            >
-              <Button
-                variant="contained"
-                size="small"
-                style={{
-                  backgroundColor: "#0A21C0",
-                  color: "#ffffff",
-                }}
-              >
-                VIEW
-              </Button>
-            </Link>
-          </Stack>
-        );
-      },
+      renderCell: (params) => (
+        <Link
+          to="/view-attendance"
+          state={{ email: params.row.email }}
+          style={{ textDecoration: "none" }}
+        >
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PersonSearchIcon sx={{ fontSize: 14 }} />}
+            sx={{
+              backgroundColor: "#0aafeb",
+              color: "#fff",
+              fontSize: 12,
+              textTransform: "none",
+              borderRadius: "8px",
+              boxShadow: "none",
+              "&:hover": { backgroundColor: "#0096c7", boxShadow: "none" },
+            }}
+          >
+            View
+          </Button>
+        </Link>
+      ),
     },
   ];
 
-  // Updated function to fetch attendance using the new backend API
   async function fetchCurrentAttendance(
     email,
     outlet,
-    currentDate = new Date()
+    currentDate = new Date(),
   ) {
-    // Format date as YYYY-MM-DD for the backend
     const formattedDate = currentDate.toISOString().split("T")[0];
-
     try {
       const response = await axios.get(
         "https://api-trackpro.bmphrc.com/attendance/status",
         {
-          params: {
-            email: email,
-            outlet: outlet,
-            date: formattedDate,
-          },
-        }
+          params: { email, outlet, date: formattedDate },
+        },
       );
-
       const data = response.data;
-
       return {
         hasTimedIn: data.hasTimedIn,
         hasTimedOut: data.hasTimedOut,
@@ -165,8 +179,7 @@ export default function Attendance() {
         addressTimeIn: data.addressTimeIn,
         addressTimeOut: data.addressTimeOut,
       };
-    } catch (error) {
-      console.error("Error fetching attendance:", error);
+    } catch {
       return {
         hasTimedIn: false,
         hasTimedOut: false,
@@ -180,71 +193,43 @@ export default function Attendance() {
 
   const capitalizeWords = (words) => {
     if (!words || !Array.isArray(words)) return [];
-
     return words.map((word) =>
-      word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : ""
+      word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : "",
     );
   };
 
   async function getUser() {
+    setLoading(true);
     try {
-      // Fetch the users' data
       const response = await axios.post(
         "https://api-trackpro.bmphrc.com/get-all-user",
-        body
+        { test: "test" },
       );
       const data = response.data.data;
-
-      // Retrieve the logged-in admin's outlets from localStorage
       const loggedInBranch = localStorage.getItem("outlet");
-
-      if (!loggedInBranch) {
-        console.error("No branch information found for the logged-in admin.");
-        return;
-      }
-
-      const loggedInBranches = loggedInBranch
-        .split(",")
-        .map((branch) => branch.trim());
-
+      if (!loggedInBranch) return;
+      const loggedInBranches = loggedInBranch.split(",").map((b) => b.trim());
       const currentDate = new Date();
-      const displayDate = `${String(currentDate.getDate()).padStart(
-        2,
-        "0"
-      )}-${String(currentDate.getMonth() + 1).padStart(
-        2,
-        "0"
-      )}-${currentDate.getFullYear()}`;
-
+      const displayDate = `${String(currentDate.getDate()).padStart(2, "0")}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${currentDate.getFullYear()}`;
       const processedUsers = [];
 
-      for (let userIndex = 0; userIndex < data.length; userIndex++) {
-        const user = data[userIndex];
-
+      for (const user of data) {
         const userOutlets = user.outlet || [];
         const matchingOutlets = userOutlets.filter((outlet) => {
-          // If admin's outlets include "Others", include all "Others: ..." entries
           if (
             loggedInBranches.includes("Others") &&
             outlet.startsWith("Others:")
-          ) {
+          )
             return true;
-          }
-
-          // Normal matching
           return loggedInBranches.some((branch) => outlet.includes(branch));
         });
-
-        if (matchingOutlets.length === 0) {
-          continue;
-        }
+        if (matchingOutlets.length === 0) continue;
 
         const capitalizedNames = capitalizeWords([
           user.firstName,
           user.middleName || "",
           user.lastName,
         ]);
-
         let activeOutletData = null;
         let latestTimeIn = null;
 
@@ -252,13 +237,11 @@ export default function Attendance() {
           const attendance = await fetchCurrentAttendance(
             user.email,
             outlet,
-            currentDate
+            currentDate,
           );
-
           if (attendance.hasTimedIn) {
             try {
-              // 🔥 The outlet is passed as is – backend will handle "Others" logic
-              const response = await axios.get(
+              const res = await axios.get(
                 "https://api-trackpro.bmphrc.com/attendance/status",
                 {
                   params: {
@@ -266,25 +249,18 @@ export default function Attendance() {
                     outlet: outlet.startsWith("Others:") ? "Others" : outlet,
                     date: currentDate.toISOString().split("T")[0],
                   },
-                }
+                },
               );
-
-              const timeInTimestamp = response.data.timeInTimestamp;
-
+              const timeInTimestamp = res.data.timeInTimestamp;
               if (
                 timeInTimestamp &&
                 (!latestTimeIn ||
                   new Date(timeInTimestamp) > new Date(latestTimeIn))
               ) {
                 latestTimeIn = timeInTimestamp;
-                activeOutletData = {
-                  outlet: outlet,
-                  attendance: attendance,
-                };
+                activeOutletData = { outlet, attendance };
               }
-            } catch (error) {
-              console.error("Error fetching timestamp:", error);
-            }
+            } catch {}
           }
         }
 
@@ -293,22 +269,15 @@ export default function Attendance() {
           const attendance = await fetchCurrentAttendance(
             user.email,
             firstOutlet,
-            currentDate
+            currentDate,
           );
-
-          activeOutletData = {
-            outlet: firstOutlet,
-            attendance: attendance,
-          };
+          activeOutletData = { outlet: firstOutlet, attendance };
         }
 
         processedUsers.push({
           count: processedUsers.length + 1,
           role: user.role,
           fullName: `${capitalizedNames[0]} ${capitalizedNames[2]}`,
-          firstName: capitalizedNames[0],
-          middleName: capitalizedNames[1] || "Null",
-          lastName: capitalizedNames[2],
           email: user.email,
           outlet: activeOutletData.attendance.hasTimedIn
             ? activeOutletData.outlet
@@ -318,20 +287,26 @@ export default function Attendance() {
           timeOut: activeOutletData.attendance.timeOut,
           hasTimedIn: activeOutletData.attendance.hasTimedIn,
           hasTimedOut: activeOutletData.attendance.hasTimedOut,
-          addressTimeIn: activeOutletData.attendance.addressTimeIn,
-          addressTimeOut: activeOutletData.attendance.addressTimeOut,
         });
       }
-
       setUserData(processedUsers);
     } catch (error) {
       console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
   React.useEffect(() => {
     getUser();
   }, []);
+
+  const today = new Date().toLocaleDateString("en-PH", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <div className="attendance">
@@ -341,54 +316,113 @@ export default function Attendance() {
         <Box
           sx={{
             flexGrow: 1,
-            padding: { xs: "10px", sm: "20px" },
-            maxWidth: "100%",
-            overflow: "auto",
-            backgroundColor: "#003554",
+            padding: { xs: "16px", sm: "24px" },
+            backgroundColor: "#f0f4f8",
+            minHeight: "calc(100vh - 58px)",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            {/* Dropdown */}
-            <FormControl sx={{ width: 200 }}>
+          {/* Page header */}
+          <div className="page-header">
+            <div>
+              <h1 className="page-title">Attendance</h1>
+              <p className="page-subtitle">{today}</p>
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div className="stats-row">
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: "#e3f8ff" }}>
+                <PeopleAltIcon sx={{ color: "#0aafeb", fontSize: 22 }} />
+              </div>
+              <div>
+                <div className="stat-value">{userData.length}</div>
+                <div className="stat-label">Total Personnel</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: "#e6f9f0" }}>
+                <AccessTimeIcon sx={{ color: "#2ecc71", fontSize: 22 }} />
+              </div>
+              <div>
+                <div className="stat-value">{timedInCount}</div>
+                <div className="stat-label">Timed In</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: "#fff0f3" }}>
+                <CheckCircleOutlineIcon
+                  sx={{ color: "#c9184a", fontSize: 22 }}
+                />
+              </div>
+              <div>
+                <div className="stat-value">{timedOutCount}</div>
+                <div className="stat-label">Timed Out</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter row */}
+          <div className="filter-row">
+            <FormControl size="small" sx={{ minWidth: 200 }}>
               <Select
                 value={selectedRoles}
                 onChange={handleRoleChange}
                 displayEmpty
-                sx={{ backgroundColor: "white" }}
+                sx={{
+                  backgroundColor: "#fff",
+                  borderRadius: "10px",
+                  fontSize: 13,
+                }}
               >
                 <MenuItem value="" disabled>
-                  Select Client
+                  Filter by Client
                 </MenuItem>
-                <MenuItem value="UNFILTERED">UNFILTERED</MenuItem>
-                <MenuItem value="RC">RC SALES AGENT</MenuItem>
-                <MenuItem value="UGC">UGC PERSONNEL</MenuItem>
+                <MenuItem value="UNFILTERED">All Clients</MenuItem>
+                <MenuItem value="RC">RC Sales Agent</MenuItem>
+                <MenuItem value="UGC">UGC Personnel</MenuItem>
                 <MenuItem value="BMP">BMPOWER</MenuItem>
               </Select>
             </FormControl>
-          </Box>
+          </div>
+
+          {/* Table */}
           <Box
             sx={{
-              height: "100%",
-              width: "100%",
-              maxHeight: "80vh",
-              marginTop: 2,
+              backgroundColor: "#fff",
+              borderRadius: "16px",
               overflow: "hidden",
+              border: "1px solid #e8ecf0",
+              boxShadow: "0 1px 8px rgba(0,0,0,0.05)",
               "& .MuiDataGrid-root": {
-                backgroundColor: "#fff",
+                border: "none",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              },
+              "& .tp-header": {
+                backgroundColor: "#f8fafc",
+                color: "#374151",
+                fontWeight: 700,
+                fontSize: 12,
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+              },
+              "& .MuiDataGrid-row:hover": { backgroundColor: "#f0f8ff" },
+              "& .MuiDataGrid-cell": { borderColor: "#f0f4f8" },
+              "& .MuiDataGrid-columnSeparator": { display: "none" },
+              "& .MuiDataGrid-toolbarContainer": {
+                padding: "12px 16px",
+                borderBottom: "1px solid #f0f4f8",
               },
             }}
           >
             <DataGrid
               rows={filteredData}
               columns={columns}
+              loading={loading}
               initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize: 10 },
-                },
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
               }}
-              slots={{
-                toolbar: GridToolbar,
-              }}
+              slots={{ toolbar: GridToolbar }}
               slotProps={{
                 toolbar: {
                   showQuickFilter: true,
@@ -402,6 +436,7 @@ export default function Attendance() {
               disableColumnFilter
               disableColumnSelector
               disableRowSelectionOnClick
+              sx={{ minHeight: 400 }}
             />
           </Box>
         </Box>
