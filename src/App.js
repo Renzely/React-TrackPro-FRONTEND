@@ -2,12 +2,7 @@ import Topbar from "./components/topbar/Topbar";
 import Sidebar from "./components/sidebar/Sidebar";
 import "./App.css";
 import "./defaultApp.css";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  createBrowserRouter,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import ViewAttendance from "./components/pages/attendance/ViewAttendance";
 import Attendance from "./components/pages/attendance/Attendance";
@@ -23,7 +18,6 @@ function App() {
       <Routes>
         <Route element={<Path />}>
           <Route path="/" element={<Login />} />
-          <Route path="/dashBoard" element={<dashBoard />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
           <Route path="/view-admin-accounts" element={<Admin />} />
           <Route path="/attendance" element={<Attendance />} />

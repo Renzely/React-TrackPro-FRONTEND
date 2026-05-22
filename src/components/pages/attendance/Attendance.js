@@ -2,14 +2,7 @@ import "./attendance.css";
 import * as React from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
-import {
-  Button,
-  Stack,
-  MenuItem,
-  Select,
-  FormControl,
-  Chip,
-} from "@mui/material";
+import { Button, MenuItem, Select, FormControl, Chip } from "@mui/material";
 import Box from "@mui/material/Box";
 import { Link } from "react-router-dom";
 import Topbar from "../../topbar/Topbar";
@@ -198,7 +191,7 @@ export default function Attendance() {
     );
   };
 
-  async function getUser() {
+  const getUser = React.useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.post(
@@ -295,11 +288,11 @@ export default function Attendance() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   React.useEffect(() => {
     getUser();
-  }, []);
+  }, [getUser]);
 
   const today = new Date().toLocaleDateString("en-PH", {
     weekday: "long",
