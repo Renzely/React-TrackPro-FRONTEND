@@ -1,19 +1,14 @@
 import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  Inventory,
   AssignmentInd,
   ManageAccounts,
   Logout,
   SupervisorAccount,
-  AssignmentReturn,
-  Store,
-  Checklist,
 } from "@mui/icons-material";
-import WarehouseIcon from "@mui/icons-material/Warehouse";
-import { Avatar, Typography, IconButton } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
+import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import MenuIcon from "@mui/icons-material/Menu";
-import AutoDeleteIcon from "@mui/icons-material/AutoDelete";
 import "./sidebar.css";
 
 export default function Sidebar() {
@@ -31,8 +26,6 @@ export default function Sidebar() {
 
   const handleItemClick = (itemName) => {
     setActiveItem(itemName);
-    // Removed the line that closes the sidebar
-    // setOpen(false); // This was causing the sidebar to close on navigation
   };
 
   const handleLogout = () => {
@@ -40,111 +33,92 @@ export default function Sidebar() {
     window.location.href = "/";
   };
 
-  const roleAccount = localStorage.getItem("roleAccount");
-  const firstName = localStorage.getItem("firstName");
+  const roleAccount = localStorage.getItem("roleAccount") || "";
+  const firstName = localStorage.getItem("firstName") || "User";
+
+  const showAdmin = [
+    "ACCOUNT SUPERVISOR",
+    "OPERATION OFFICER",
+    "OPERATION HEAD",
+    "SENIOR OPERATION MANAGER",
+  ].includes(roleAccount);
+
+  const initials = firstName.charAt(0).toUpperCase();
+
+  const navItem = (to, icon, label) => (
+    <Tooltip title={!isOpen ? label : ""} placement="right" arrow key={to}>
+      <NavLink to={to} onClick={() => handleItemClick(to)}>
+        <li className={`sidebar-item ${activeItem === to ? "active" : ""}`}>
+          <span className="sidebar-icon">{icon}</span>
+          {isOpen && <span className="sidebar-label">{label}</span>}
+          {activeItem === to && <span className="active-indicator" />}
+        </li>
+      </NavLink>
+    </Tooltip>
+  );
 
   return (
     <div className={`sidebar ${isOpen ? "open" : ""}`}>
-      {/* Toggle Button */}
-      <div className="sidebar-header">
-        <IconButton onClick={toggleSidebar} className="menu-button">
-          <MenuIcon sx={{ color: "white" }} />
+      {/* Toggle */}
+      <div className="sidebar-toggle">
+        <IconButton onClick={toggleSidebar} size="small" className="toggle-btn">
+          {isOpen ? (
+            <MenuOpenIcon
+              sx={{ color: "rgba(255,255,255,0.7)", fontSize: 20 }}
+            />
+          ) : (
+            <MenuIcon sx={{ color: "rgba(255,255,255,0.7)", fontSize: 20 }} />
+          )}
         </IconButton>
       </div>
 
-      {/* User Info */}
-      <div className="sidebar-user">
-        <Avatar
-          className="sidebar-avatar"
-          sx={{ color: "black", backgroundColor: "#90e0ef" }}
-        />
+      {/* User card */}
+      <div className={`sidebar-user ${isOpen ? "expanded" : ""}`}>
+        <div className="sidebar-avatar">{initials}</div>
         {isOpen && (
           <div className="user-info">
-            <Typography variant="body1" className="sidebar-name">
-              {firstName}
-            </Typography>
-            <Typography variant="body2" className="sidebar-role">
-              {roleAccount}
-            </Typography>
+            <span className="sidebar-name">{firstName}</span>
+            <span className="sidebar-role">{roleAccount}</span>
           </div>
         )}
       </div>
 
-      {/* Divider Line */}
-      <hr className="sidebar-divider" />
+      <div className="sidebar-divider" />
 
-      {/* Sidebar Menu */}
+      {/* Nav section label */}
+      {isOpen && <span className="nav-section-label">Navigation</span>}
+
+      {/* Menu */}
       <ul className="sidebar-menu">
-        <NavLink
-          to="/view-accounts"
-          onClick={() => handleItemClick("/view-accounts")}
-        >
-          <li className={activeItem === "/view-accounts" ? "active" : ""}>
-            <ManageAccounts className="sidebar-icon" /> {isOpen && "Accounts"}
-          </li>
-        </NavLink>
-
-        {[
-          "ACCOUNT SUPERVISOR",
-          "OPERATION OFFICER",
-          "OPERATION HEAD",
-          "SENIOR OPERATION MANAGER",
-        ].includes(roleAccount) && (
-          <NavLink
-            to="/view-admin-accounts"
-            onClick={() => handleItemClick("/view-admin-accounts")}
-          >
-            <li
-              className={activeItem === "/view-admin-accounts" ? "active" : ""}
-            >
-              <SupervisorAccount className="sidebar-icon" />{" "}
-              {isOpen && "Admin Accounts"}
-            </li>
-          </NavLink>
+        {navItem(
+          "/view-accounts",
+          <ManageAccounts sx={{ fontSize: 20 }} />,
+          "Accounts",
         )}
-        <NavLink
-          to="/attendance"
-          onClick={() => handleItemClick("/attendance")}
-        >
-          <li className={activeItem === "/attendance" ? "active" : ""}>
-            <AssignmentInd className="sidebar-icon" /> {isOpen && "Attendance"}
-          </li>
-        </NavLink>
-
-        <NavLink
-          to="/view-competitors"
-          onClick={() => handleItemClick("/view-competitors")}
-        >
-          <li className={activeItem === "/view-competitors" ? "active" : ""}>
-            <WarehouseIcon className="sidebar-icon" /> {isOpen && "Competitors"}
-          </li>
-        </NavLink>
-
-        <NavLink to="/view-VET" onClick={() => handleItemClick("/view-VET")}>
-          <li className={activeItem === "/view-VET" ? "active" : ""}>
-            <Checklist className="sidebar-icon" /> {isOpen && "VET"}
-          </li>
-        </NavLink>
-        <NavLink to="/view-PSR" onClick={() => handleItemClick("/view-PSR")}>
-          <li className={activeItem === "/view-PSR" ? "active" : ""}>
-            <Checklist className="sidebar-icon" /> {isOpen && "PSR"}
-          </li>
-        </NavLink>
-
-        <NavLink
-          to="/view-Expiry"
-          onClick={() => handleItemClick("/view-Expiry")}
-        >
-          <li className={activeItem === "/view-Expiry" ? "active" : ""}>
-            <AutoDeleteIcon className="sidebar-icon" /> {isOpen && "Expiry"}
-          </li>
-        </NavLink>
-
-        {/* Logout */}
-        <li className="logout" onClick={handleLogout}>
-          <Logout className="sidebar-icon" /> {isOpen && "Logout"}
-        </li>
+        {showAdmin &&
+          navItem(
+            "/view-admin-accounts",
+            <SupervisorAccount sx={{ fontSize: 20 }} />,
+            "Admin Accounts",
+          )}
+        {navItem(
+          "/attendance",
+          <AssignmentInd sx={{ fontSize: 20 }} />,
+          "Attendance",
+        )}
       </ul>
+
+      {/* Spacer */}
+      <div style={{ flex: 1 }} />
+
+      {/* Logout */}
+      <div className="sidebar-divider" />
+      <Tooltip title={!isOpen ? "Logout" : ""} placement="right" arrow>
+        <div className="sidebar-logout" onClick={handleLogout}>
+          <Logout sx={{ fontSize: 18, color: "#ff6b6b" }} />
+          {isOpen && <span className="logout-label">Logout</span>}
+        </div>
+      </Tooltip>
     </div>
   );
 }

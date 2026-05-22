@@ -1,116 +1,264 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
+:root {
+  --sidebar-collapsed: 64px;
+  --sidebar-expanded: 220px;
+  --color-primary: #0aafeb;
+  --color-primary-dim: rgba(10, 175, 235, 0.12);
+  --color-primary-border: rgba(10, 175, 235, 0.25);
+  --sidebar-bg: #051923;
+  --sidebar-bg-light: #0a2a3a;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.45);
+  --text-muted: rgba(255, 255, 255, 0.25);
+}
+
+/* ─── Base ─────────────────────────────────────── */
 .sidebar {
-  width: 60px;
-  height: 95vh;
-  background: #1b4965;
+  width: var(--sidebar-collapsed);
+  min-height: 100vh;
+  background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Align items to the top */
-  padding: 10px 0; /* Adjust padding */
-  transition: width 0.3s;
-  font-family: "Inter", sans-serif;
-}
-
-.sidebar-divider {
-  width: 90%; /* Adjust width as needed */
-  border: 0;
-  height: 1px;
-  background: #ffffff; /* Adjust color to match your design */
-  margin: 10px auto; /* Add spacing above and below the line */
-  margin-top: -20px;
+  padding: 12px 0 16px;
+  transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  border-right: 1px solid rgba(10, 175, 235, 0.1);
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .sidebar.open {
-  width: 200px;
+  width: var(--sidebar-expanded);
+  align-items: flex-start;
 }
 
-.sidebar-header {
-  display: flex;
-  justify-content: center; /* Center when closed */
+/* ─── Toggle ─────────────────────────────────── */
+.sidebar-toggle {
   width: 100%;
-  padding: 20px 0; /* Add some padding */
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 8px;
 }
 
-.sidebar.open .sidebar-header {
-  justify-content: flex-end; /* Align to the right when open */
-  padding-right: 10px; /* Add some spacing from the edge */
+.sidebar.open .sidebar-toggle {
+  justify-content: flex-end;
+  padding-right: 12px;
 }
 
+.toggle-btn {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  width: 34px !important;
+  height: 34px !important;
+  transition: background 0.2s !important;
+}
+
+.toggle-btn:hover {
+  background: var(--color-primary-dim) !important;
+  border-color: var(--color-primary-border) !important;
+}
+
+/* ─── User Card ──────────────────────────────── */
 .sidebar-user {
-  text-align: center;
-  color: white;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center the avatar */
-  margin-top: 50px;
-  margin-bottom: 50px;
-  position: relative; /* Make sure user info is fixed relative to this container */
-  border: none; /* Ensure no border is applied */
-  background: none; /* Ensure no background is applied */
+  align-items: center;
+  width: 100%;
+  padding: 16px 0 12px;
+  gap: 8px;
+}
+
+.sidebar.open .sidebar-user {
+  flex-direction: row;
+  padding: 12px 16px;
+  gap: 10px;
 }
 
 .sidebar-avatar {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0aafeb, #0077b6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(10, 175, 235, 0.35);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .sidebar-name {
-  font-size: 12px;
-  font-family: "Inter", sans-serif;
-  color: white;
-  border: none; /* Ensure no border is applied */
-  background: none; /* Ensure no background is applied */
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sidebar-menu a {
-  text-decoration: none; /* Remove underline */
+.sidebar-role {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sidebar-menu a.active {
-  text-decoration: none; /* Remove underline from active */
+/* ─── Divider ────────────────────────────────── */
+.sidebar-divider {
+  width: 80%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  margin: 6px auto;
+  flex-shrink: 0;
 }
 
+/* ─── Section Label ──────────────────────────── */
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 8px 16px 4px;
+  white-space: nowrap;
+}
+
+/* ─── Menu ───────────────────────────────────── */
 .sidebar-menu {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Align menu items to the left */
   list-style: none;
-  padding: 0;
-  gap: 15px; /* Reduce the gap between menu items */
-  width: 100%; /* Ensure the menu takes full width */
-  margin-top: 10px; /* Adjust margin to reduce gap */
+  padding: 4px 0;
+  margin: 0;
+  width: 100%;
+  gap: 2px;
 }
 
-.sidebar-menu li {
-  color: #ffffff;
-  font-size: 15px;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s;
-  width: 100%; /* Ensure full width for alignment */
+.sidebar-menu a {
+  text-decoration: none;
+  display: block;
+  width: 100%;
+}
+
+/* ─── Menu Item ──────────────────────────────── */
+.sidebar-item {
+  position: relative;
   display: flex;
-  align-items: center; /* Align icon and text vertically */
-  gap: 10px; /* Space between icon and text */
-  box-sizing: border-box; /* Ensure padding is included in width */
-  border: none; /* Ensure no border is applied */
-  background: none; /* Ensure no background is applied */
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 0;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 0;
+  transition:
+    color 0.2s,
+    background 0.2s;
+  font-size: 13px;
+  font-weight: 500;
+  box-sizing: border-box;
+  border: none;
 }
 
-.sidebar-menu li .sidebar-icon {
-  font-size: 24px;
-  min-width: 35px; /* Ensure icons have consistent width */
+.sidebar.open .sidebar-item {
+  justify-content: flex-start;
+  padding: 10px 16px;
+  border-radius: 10px;
+  margin: 0 8px;
+  width: calc(100% - 16px);
 }
 
-.sidebar-menu .active {
-  background: #5066f8;
-  color: white;
-  width: 100%; /* Remove calc to ensure full width */
+.sidebar-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.logout {
-  color: red;
+.sidebar.open .sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-item.active {
+  color: var(--color-primary);
+  background: var(--color-primary-dim);
+}
+
+.sidebar.open .sidebar-item.active {
+  color: var(--color-primary);
+  background: var(--color-primary-dim);
+  border: 1px solid var(--color-primary-border);
+}
+
+/* Active bar on collapsed */
+.active-indicator {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--color-primary);
+  border-radius: 2px 0 0 2px;
+}
+
+.sidebar.open .active-indicator {
+  display: none;
+}
+
+.sidebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+}
+
+.sidebar-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Logout ─────────────────────────────────── */
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: #ff6b6b;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.sidebar.open .sidebar-logout {
+  justify-content: flex-start;
+  padding: 10px 20px;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.logout-label {
+  white-space: nowrap;
 }
