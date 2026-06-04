@@ -8,7 +8,6 @@ import { Button, Stack } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
-import { styled } from "@mui/material/styles";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -28,26 +27,7 @@ import Swal from "sweetalert2";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
-
-const OUTLETS = [
-  "BMPOWER OFFICE",
-  "Others",
-  "RC OFFICE",
-  "RC HUB",
-  "CEBU OFFICE",
-  "SIARGAO",
-  "Branch",
-  "UGC Tanay",
-  "UGC Pasig City",
-  "UGC Calamba",
-  "UGC Pampanga",
-  "UGC Davao",
-  "UGC Lucena",
-  "UGC Bicol",
-  "UGC Tacloban",
-  "UGC Pangasinan",
-  "HOME",
-];
+import { ACCOUNT_OUTLETS, ACCOUNT_NAMES } from "../account/outletData.js";
 
 export default function Admin() {
   const [userData, setUserData] = React.useState([]);
@@ -62,7 +42,6 @@ export default function Admin() {
   const [inputOtpCode, setInputOtpCode] = React.useState();
   const [inputOtpCodeError, setInputOtpCodeError] = React.useState();
   const [adminSelectedRole, setSelectedRole] = React.useState("");
-  const [adminSelectedBranch, setSelectedBranch] = useState([]);
   const [adminFirstName, setAdminFirstName] = React.useState("");
   const [adminMiddleName, setAdminMiddleName] = React.useState("");
   const [adminLastName, setAdminLastName] = React.useState("");
@@ -74,19 +53,50 @@ export default function Admin() {
   const [adminViewFullName, setAdminViewFullName] = React.useState("");
   const [adminViewEmail, setAdminViewEmail] = React.useState("");
   const [adminViewPhone, setAdminViewPhone] = React.useState("");
-  const [selectedBranches, setSelectedBranches] = useState([]);
+
+  // ── Add Admin: multiple accounts + combined outlets ──
+  const [addAccounts, setAddAccounts] = useState([]);
+  const [addOutlets, setAddOutlets] = useState([]);
+
+  // ── View/Edit Modal: multiple accounts + combined outlets ──
+  const [viewAccounts, setViewAccounts] = useState([]);
+  const [viewOutlets, setViewOutlets] = useState([]);
 
   // Errors
   const [adminFirstNameError, setAdminFirstNameError] = React.useState("");
   const [adminLastNameError, setAdminLastNameError] = React.useState("");
   const [adminEmailError, setAdminEmailError] = React.useState("");
-  const [adminPhoneError, setAdminPhoneError] = React.useState("");
   const [adminPasswordError, setAdminPasswordError] = React.useState("");
   const [adminConfirmPasswordError, setAdminConfirmPasswordError] =
     React.useState("");
 
   const requestBody = { isVerified: updateStatus, emailAddress: userEmail };
   const activeCount = userData.filter((u) => u.isVerified).length;
+
+  // Combined outlet pool based on selected accounts
+  const addOutletPool = [
+    ...new Set(addAccounts.flatMap((acc) => ACCOUNT_OUTLETS[acc] ?? [])),
+  ];
+  const viewOutletPool = [
+    ...new Set(viewAccounts.flatMap((acc) => ACCOUNT_OUTLETS[acc] ?? [])),
+  ];
+
+  // When accounts change, drop outlets that no longer belong to any selected account
+  const handleAddAccountsChange = (_, newAccounts) => {
+    const newPool = [
+      ...new Set(newAccounts.flatMap((acc) => ACCOUNT_OUTLETS[acc] ?? [])),
+    ];
+    setAddAccounts(newAccounts);
+    setAddOutlets((prev) => prev.filter((o) => newPool.includes(o)));
+  };
+
+  const handleViewAccountsChange = (_, newAccounts) => {
+    const newPool = [
+      ...new Set(newAccounts.flatMap((acc) => ACCOUNT_OUTLETS[acc] ?? [])),
+    ];
+    setViewAccounts(newAccounts);
+    setViewOutlets((prev) => prev.filter((o) => newPool.includes(o)));
+  };
 
   const columns = [
     {
@@ -104,7 +114,7 @@ export default function Admin() {
     {
       field: "outlet",
       headerName: "Outlet",
-      width: 180,
+      width: 220,
       headerClassName: "tp-header",
       renderCell: (p) => (
         <span style={{ fontSize: 12, color: "#555" }}>
@@ -185,10 +195,19 @@ export default function Admin() {
             m && m !== "Null"
               ? `${params.row.firstName} ${m} ${params.row.lastName}`
               : `${params.row.firstName} ${params.row.lastName}`;
-          setAdminViewBranch(params.row.outlet);
+          const existingOutlets = Array.isArray(params.row.outlet)
+            ? params.row.outlet
+            : [];
+          // Auto-detect which accounts the existing outlets belong to
+          const matchedAccounts = ACCOUNT_NAMES.filter((acc) =>
+            existingOutlets.some((o) => ACCOUNT_OUTLETS[acc]?.includes(o)),
+          );
+          setAdminViewBranch(existingOutlets);
           setAdminViewFullName(fn);
           setAdminViewEmail(params.row.emailAddress);
           setAdminViewPhone(params.row.contactNum);
+          setViewAccounts(matchedAccounts);
+          setViewOutlets(existingOutlets);
           setOpenViewModal(true);
         };
         return (
@@ -248,11 +267,15 @@ export default function Admin() {
 
   async function sendOtp() {
     if (!adminSelectedRole) {
-      Swal.fire({ title: "Select Role", icon: "warning" });
+      Swal.fire({ title: "Select a Role", icon: "warning" });
       return;
     }
-    if (!adminSelectedBranch.length) {
-      Swal.fire({ title: "Select Branch", icon: "warning" });
+    if (!addAccounts.length) {
+      Swal.fire({ title: "Select at least one Account", icon: "warning" });
+      return;
+    }
+    if (!addOutlets.length) {
+      Swal.fire({ title: "Select at least one Outlet", icon: "warning" });
       return;
     }
     try {
@@ -272,7 +295,7 @@ export default function Admin() {
     if (otpCode === inputOtpCode) {
       const userDetails = {
         roleAccount: adminSelectedRole,
-        outlet: adminSelectedBranch,
+        outlet: addOutlets,
         firstName: adminFirstName,
         middleName: adminMiddleName,
         lastName: adminLastName,
@@ -303,7 +326,7 @@ export default function Admin() {
     try {
       await axios.put("https://api-trackpro.bmphrc.com/update-admin-outlet", {
         emailAddress: email,
-        outlet: selectedBranches,
+        outlet: viewOutlets,
       });
       setOpenViewModal(false);
       setTimeout(() => window.location.reload(), 800);
@@ -315,10 +338,6 @@ export default function Admin() {
   React.useEffect(() => {
     getUser();
   }, []);
-  React.useEffect(() => {
-    if (adminViewBranch && Array.isArray(adminViewBranch))
-      setSelectedBranches(adminViewBranch);
-  }, [adminViewBranch]);
 
   const inputSx = { "& .MuiOutlinedInput-root": { borderRadius: "10px" } };
 
@@ -449,7 +468,7 @@ export default function Admin() {
             />
           </Box>
 
-          {/* View Modal */}
+          {/* ── View / Edit Modal ── */}
           <Modal open={openViewModal} onClose={() => setOpenViewModal(false)}>
             <Box
               sx={{
@@ -514,16 +533,18 @@ export default function Admin() {
                   fullWidth
                   sx={inputSx}
                 />
+
+                {/* ── Step 1: Accounts (multi-select) ── */}
                 <Autocomplete
                   multiple
                   disableCloseOnSelect
-                  options={OUTLETS}
-                  value={selectedBranches}
-                  onChange={(e, v) => setSelectedBranches(v)}
+                  options={ACCOUNT_NAMES}
+                  value={viewAccounts}
+                  onChange={handleViewAccountsChange}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Update Outlets"
+                      label="Accounts"
                       size="small"
                       sx={inputSx}
                     />
@@ -535,36 +556,73 @@ export default function Admin() {
                     </li>
                   )}
                 />
-                <Stack direction="row" spacing={1.5}>
-                  <Button
-                    onClick={() => setSelectedBranches(OUTLETS)}
-                    variant="contained"
-                    size="small"
-                    sx={{
-                      flex: 1,
-                      backgroundColor: "#0aafeb",
-                      borderRadius: "10px",
-                      textTransform: "none",
-                      boxShadow: "none",
-                    }}
-                  >
-                    Select All
-                  </Button>
-                  <Button
-                    onClick={() => setSelectedBranches([])}
-                    variant="contained"
-                    size="small"
-                    sx={{
-                      flex: 1,
-                      backgroundColor: "#ef4444",
-                      borderRadius: "10px",
-                      textTransform: "none",
-                      boxShadow: "none",
-                    }}
-                  >
-                    Clear All
-                  </Button>
-                </Stack>
+
+                {/* ── Step 2: Combined Outlets ── */}
+                {viewAccounts.length > 0 && (
+                  <>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#94a3b8", mt: -1 }}
+                    >
+                      Showing outlets from: {viewAccounts.join(", ")}
+                    </Typography>
+                    <Autocomplete
+                      multiple
+                      disableCloseOnSelect
+                      options={viewOutletPool}
+                      value={viewOutlets}
+                      onChange={(_, v) => setViewOutlets(v)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Outlets"
+                          size="small"
+                          sx={inputSx}
+                        />
+                      )}
+                      renderOption={(props, option, { selected }) => (
+                        <li {...props}>
+                          <Checkbox
+                            style={{ marginRight: 8 }}
+                            checked={selected}
+                          />
+                          {option}
+                        </li>
+                      )}
+                    />
+                    <Stack direction="row" spacing={1.5}>
+                      <Button
+                        onClick={() => setViewOutlets(viewOutletPool)}
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          flex: 1,
+                          backgroundColor: "#0aafeb",
+                          borderRadius: "10px",
+                          textTransform: "none",
+                          boxShadow: "none",
+                        }}
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        onClick={() => setViewOutlets([])}
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          flex: 1,
+                          backgroundColor: "#ef4444",
+                          borderRadius: "10px",
+                          textTransform: "none",
+                          boxShadow: "none",
+                        }}
+                      >
+                        Clear All
+                      </Button>
+                    </Stack>
+                  </>
+                )}
+
                 <Button
                   onClick={() => handleBranchSave(adminViewEmail)}
                   variant="contained"
@@ -594,7 +652,7 @@ export default function Admin() {
             </Box>
           </Modal>
 
-          {/* Add Admin Modal */}
+          {/* ── Add Admin Modal ── */}
           <Modal open={openModal} onClose={() => setOpenModal(false)}>
             <Box
               sx={{
@@ -618,6 +676,7 @@ export default function Admin() {
                 Add New Admin
               </Typography>
               <Stack spacing={2}>
+                {/* Role */}
                 <FormControl size="small" fullWidth>
                   <InputLabel>Role</InputLabel>
                   <Select
@@ -639,16 +698,18 @@ export default function Admin() {
                     </MenuItem>
                   </Select>
                 </FormControl>
+
+                {/* ── Step 1: Accounts (multi-select) ── */}
                 <Autocomplete
                   multiple
                   disableCloseOnSelect
-                  options={OUTLETS}
-                  value={adminSelectedBranch}
-                  onChange={(e, v) => setSelectedBranch(v)}
+                  options={ACCOUNT_NAMES}
+                  value={addAccounts}
+                  onChange={handleAddAccountsChange}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Branches"
+                      label="Accounts"
                       size="small"
                       sx={inputSx}
                     />
@@ -660,6 +721,83 @@ export default function Admin() {
                     </li>
                   )}
                 />
+
+                {/* ── Step 2: Combined Outlets ── */}
+                {addAccounts.length > 0 ? (
+                  <>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#94a3b8", mt: -1 }}
+                    >
+                      Showing outlets from: {addAccounts.join(", ")}
+                    </Typography>
+                    <Autocomplete
+                      multiple
+                      disableCloseOnSelect
+                      options={addOutletPool}
+                      value={addOutlets}
+                      onChange={(_, v) => setAddOutlets(v)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Outlets"
+                          size="small"
+                          sx={inputSx}
+                        />
+                      )}
+                      renderOption={(props, option, { selected }) => (
+                        <li {...props}>
+                          <Checkbox
+                            style={{ marginRight: 8 }}
+                            checked={selected}
+                          />
+                          {option}
+                        </li>
+                      )}
+                    />
+                    <Stack direction="row" spacing={1.5}>
+                      <Button
+                        onClick={() => setAddOutlets(addOutletPool)}
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          flex: 1,
+                          backgroundColor: "#0aafeb",
+                          borderRadius: "10px",
+                          textTransform: "none",
+                          boxShadow: "none",
+                        }}
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        onClick={() => setAddOutlets([])}
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          flex: 1,
+                          backgroundColor: "#ef4444",
+                          borderRadius: "10px",
+                          textTransform: "none",
+                          boxShadow: "none",
+                        }}
+                      >
+                        Clear All
+                      </Button>
+                    </Stack>
+                  </>
+                ) : (
+                  <TextField
+                    label="Outlets"
+                    size="small"
+                    disabled
+                    fullWidth
+                    placeholder="Select an Account first"
+                    sx={inputSx}
+                  />
+                )}
+
+                {/* Name fields */}
                 <Stack direction="row" spacing={1.5}>
                   <TextField
                     label="First Name"
@@ -692,9 +830,7 @@ export default function Admin() {
                   label="Email"
                   size="small"
                   value={adminEmail}
-                  onChange={(e) => {
-                    setAdminEmail(e.target.value);
-                  }}
+                  onChange={(e) => setAdminEmail(e.target.value)}
                   error={!!adminEmailError}
                   helperText={adminEmailError}
                   fullWidth
@@ -755,6 +891,7 @@ export default function Admin() {
                   fullWidth
                   sx={inputSx}
                 />
+
                 <Stack direction="row" spacing={1.5} justifyContent="flex-end">
                   <Button
                     onClick={() => setOpenModal(false)}

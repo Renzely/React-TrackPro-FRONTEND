@@ -27,26 +27,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
-
-const BRANCHES = [
-  "BMPOWER OFFICE",
-  "Others",
-  "RC OFFICE",
-  "RC HUB",
-  "CEBU OFFICE",
-  "SIARGAO",
-  "Branch",
-  "UGC Tanay",
-  "UGC Pasig City",
-  "UGC Calamba",
-  "UGC Pampanga",
-  "UGC Davao",
-  "UGC Lucena",
-  "UGC Bicol",
-  "UGC Tacloban",
-  "UGC Pangasinan",
-  "HOME",
-];
+import { ACCOUNT_OUTLETS, ACCOUNT_NAMES } from "./outletData";
 
 export default function Account() {
   const [userData, setUserData] = React.useState([]);
@@ -59,7 +40,11 @@ export default function Account() {
   const [modalEmail, setModalEmail] = React.useState("");
   const [modalPhone, setModalPhone] = React.useState("");
   const [openDialog, setOpenDialog] = React.useState(false);
-  const [selectedBranches, setSelectedBranches] = React.useState([]);
+
+  // ── Multi-account + combined outlets ──
+  const [selectedAccounts, setSelectedAccounts] = React.useState([]);
+  const [selectedOutlets, setSelectedOutlets] = React.useState([]);
+
   const roleAccount = localStorage.getItem("roleAccount");
   const allowedRoles = [
     "ACCOUNT SUPERVISOR",
@@ -68,6 +53,20 @@ export default function Account() {
     "COORDINATOR",
   ];
   const isAllowed = allowedRoles.includes(roleAccount);
+
+  // Combined outlet pool from all selected accounts
+  const outletPool = [
+    ...new Set(selectedAccounts.flatMap((acc) => ACCOUNT_OUTLETS[acc] ?? [])),
+  ];
+
+  // When accounts change, drop outlets that no longer belong to any selected account
+  const handleAccountsChange = (_, newAccounts) => {
+    const newPool = [
+      ...new Set(newAccounts.flatMap((acc) => ACCOUNT_OUTLETS[acc] ?? [])),
+    ];
+    setSelectedAccounts(newAccounts);
+    setSelectedOutlets((prev) => prev.filter((o) => newPool.includes(o)));
+  };
 
   const filteredData =
     selectedRoles === "" || selectedRoles === "UNFILTERED"
@@ -188,10 +187,19 @@ export default function Account() {
             m && m !== "Null"
               ? `${params.row.firstName} ${m} ${params.row.lastName}`
               : `${params.row.firstName} ${params.row.lastName}`;
+          const existingOutlets = Array.isArray(params.row.outlet)
+            ? params.row.outlet
+            : [];
+          // Auto-detect all accounts the user's outlets belong to
+          const matchedAccounts = ACCOUNT_NAMES.filter((acc) =>
+            existingOutlets.some((o) => ACCOUNT_OUTLETS[acc]?.includes(o)),
+          );
           setModalFullName(fn);
-          setModalBranch(params.row.outlet);
+          setModalBranch(existingOutlets);
           setModalEmail(params.row.emailAddress);
           setModalPhone(params.row.contactNum);
+          setSelectedAccounts(matchedAccounts);
+          setSelectedOutlets(existingOutlets);
           setOpenModal(true);
         };
         return (
@@ -224,28 +232,29 @@ export default function Account() {
         "https://api-trackpro.bmphrc.com/get-all-user",
       );
       const data = response.data.data;
-      const filteredData = data.filter((item) =>
+      const filteredByBranch = data.filter((item) =>
         loggedInBranches.some((o) => item.outlet?.includes(o)),
       );
-      const newData = filteredData.map((d, key) => {
-        const names = capitalizeWords([
-          d.firstName,
-          d.middleName || "",
-          d.lastName,
-        ]);
-        return {
-          count: key + 1,
-          role: d.role,
-          outlet: d.outlet,
-          firstName: names[0],
-          middleName: names[1] || "Null",
-          lastName: names[2],
-          emailAddress: d.email,
-          contactNum: d.contactNumber,
-          isActive: d.isVerified,
-        };
-      });
-      setUserData(newData);
+      setUserData(
+        filteredByBranch.map((d, key) => {
+          const names = capitalizeWords([
+            d.firstName,
+            d.middleName || "",
+            d.lastName,
+          ]);
+          return {
+            count: key + 1,
+            role: d.role,
+            outlet: d.outlet,
+            firstName: names[0],
+            middleName: names[1] || "Null",
+            lastName: names[2],
+            emailAddress: d.email,
+            contactNum: d.contactNumber,
+            isActive: d.isVerified,
+          };
+        }),
+      );
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -267,7 +276,7 @@ export default function Account() {
     try {
       await axios.put("https://api-trackpro.bmphrc.com/update-user-branch", {
         email: modalEmail,
-        outlet: selectedBranches,
+        outlet: selectedOutlets,
       });
       getUser();
       setTimeout(() => window.location.reload(), 800);
@@ -279,13 +288,9 @@ export default function Account() {
 
   React.useEffect(() => {
     getUser();
+  }, []);
 
-    const saved = JSON.parse(localStorage.getItem("selectedBranches"));
-
-    if (Array.isArray(saved)) {
-      setSelectedBranches(saved);
-    }
-  }, [getUser]);
+  const inputSx = { "& .MuiOutlinedInput-root": { borderRadius: "10px" } };
 
   return (
     <div className="account">
@@ -419,7 +424,7 @@ export default function Account() {
             />
           </Box>
 
-          {/* Detail Modal */}
+          {/* ── Detail Modal ── */}
           <Modal open={openModal} onClose={() => setOpenModal(false)}>
             <Box
               sx={{
@@ -452,7 +457,7 @@ export default function Account() {
                   InputProps={{ readOnly: true }}
                   size="small"
                   fullWidth
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+                  sx={inputSx}
                 />
                 <TextField
                   label="Email"
@@ -460,7 +465,7 @@ export default function Account() {
                   InputProps={{ readOnly: true }}
                   size="small"
                   fullWidth
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+                  sx={inputSx}
                 />
                 <TextField
                   label="Contact Number"
@@ -468,7 +473,7 @@ export default function Account() {
                   InputProps={{ readOnly: true }}
                   size="small"
                   fullWidth
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+                  sx={inputSx}
                 />
                 <TextField
                   label="Current Outlets"
@@ -482,27 +487,22 @@ export default function Account() {
                   fullWidth
                   multiline
                   rows={2}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+                  sx={inputSx}
                 />
+
+                {/* ── Step 1: Accounts (multi-select) ── */}
                 <Autocomplete
                   multiple
                   disableCloseOnSelect
-                  options={[...new Set(BRANCHES)]}
-                  value={selectedBranches}
-                  onChange={(e, v) => {
-                    setSelectedBranches(v);
-                    localStorage.setItem("selectedBranches", JSON.stringify(v));
-                  }}
-                  getOptionLabel={(o) => o}
-                  isOptionEqualToValue={(o, v) => o === v}
+                  options={ACCOUNT_NAMES}
+                  value={selectedAccounts}
+                  onChange={handleAccountsChange}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Select Outlets"
+                      label="Accounts"
                       size="small"
-                      sx={{
-                        "& .MuiOutlinedInput-root": { borderRadius: "10px" },
-                      }}
+                      sx={inputSx}
                     />
                   )}
                   renderOption={(props, option, { selected }) => (
@@ -512,36 +512,84 @@ export default function Account() {
                     </li>
                   )}
                 />
-                <Stack direction="row" spacing={1.5}>
-                  <Button
-                    onClick={() => setSelectedBranches(BRANCHES)}
-                    variant="contained"
+
+                {/* ── Step 2: Combined Outlets (only after ≥1 account selected) ── */}
+                {selectedAccounts.length > 0 ? (
+                  <>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#94a3b8", mt: -1 }}
+                    >
+                      Showing outlets from: {selectedAccounts.join(", ")}
+                    </Typography>
+                    <Autocomplete
+                      multiple
+                      disableCloseOnSelect
+                      options={outletPool}
+                      value={selectedOutlets}
+                      onChange={(_, v) => setSelectedOutlets(v)}
+                      getOptionLabel={(o) => o}
+                      isOptionEqualToValue={(o, v) => o === v}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Outlets"
+                          size="small"
+                          sx={inputSx}
+                        />
+                      )}
+                      renderOption={(props, option, { selected }) => (
+                        <li {...props}>
+                          <Checkbox
+                            style={{ marginRight: 8 }}
+                            checked={selected}
+                          />
+                          {option}
+                        </li>
+                      )}
+                    />
+                    <Stack direction="row" spacing={1.5}>
+                      <Button
+                        onClick={() => setSelectedOutlets(outletPool)}
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          flex: 1,
+                          backgroundColor: "#0aafeb",
+                          borderRadius: "10px",
+                          textTransform: "none",
+                          boxShadow: "none",
+                        }}
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        onClick={() => setSelectedOutlets([])}
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          flex: 1,
+                          backgroundColor: "#ef4444",
+                          borderRadius: "10px",
+                          textTransform: "none",
+                          boxShadow: "none",
+                        }}
+                      >
+                        Clear All
+                      </Button>
+                    </Stack>
+                  </>
+                ) : (
+                  <TextField
+                    label="Outlets"
                     size="small"
-                    sx={{
-                      flex: 1,
-                      backgroundColor: "#0aafeb",
-                      borderRadius: "10px",
-                      textTransform: "none",
-                      boxShadow: "none",
-                    }}
-                  >
-                    Select All
-                  </Button>
-                  <Button
-                    onClick={() => setSelectedBranches([])}
-                    variant="contained"
-                    size="small"
-                    sx={{
-                      flex: 1,
-                      backgroundColor: "#ef4444",
-                      borderRadius: "10px",
-                      textTransform: "none",
-                      boxShadow: "none",
-                    }}
-                  >
-                    Clear All
-                  </Button>
-                </Stack>
+                    disabled
+                    fullWidth
+                    placeholder="Select an Account first"
+                    sx={inputSx}
+                  />
+                )}
+
                 <Button
                   onClick={handleBranchSave}
                   variant="contained"
