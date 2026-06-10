@@ -56,7 +56,10 @@ export default function Attendance() {
   const [userData, setUserData] = React.useState([]);
   const [selectedRoles, setSelectedRoles] = React.useState("");
   const [loading, setLoading] = React.useState(true);
-
+  const [loadingProgress, setLoadingProgress] = React.useState({
+    current: 0,
+    total: 0,
+  });
   // ── Export panel state ───────────────────────────────────────────────────
   const [allUsers, setAllUsers] = React.useState([]);
   const [exportUsers, setExportUsers] = React.useState([]); // ← array now
@@ -238,12 +241,10 @@ export default function Attendance() {
       const loggedInBranches = loggedInBranch.split(",").map((b) => b.trim());
       const currentDate = new Date();
       const displayDate = `${String(currentDate.getDate()).padStart(2, "0")}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${currentDate.getFullYear()}`;
-      const processedUsers = [];
-      const exportableUsers = [];
 
-      for (const user of data) {
+      const relevantUsers = data.filter((user) => {
         const userOutlets = user.outlet || [];
-        const matchingOutlets = userOutlets.filter((outlet) => {
+        return userOutlets.some((outlet) => {
           if (
             loggedInBranches.includes("Others") &&
             outlet.startsWith("Others:")
@@ -251,77 +252,102 @@ export default function Attendance() {
             return true;
           return loggedInBranches.some((branch) => outlet.includes(branch));
         });
-        if (matchingOutlets.length === 0) continue;
+      });
 
-        const capitalizedNames = capitalizeWords([
-          user.firstName,
-          user.middleName || "",
-          user.lastName,
-        ]);
-        const fullName = `${capitalizedNames[0]} ${capitalizedNames[2]}`;
+      setLoadingProgress({ current: 0, total: relevantUsers.length });
 
-        exportableUsers.push({
-          label: `${fullName} — ${user.email}`,
-          email: user.email,
-          fullName,
-        });
+      const results = await Promise.all(
+        relevantUsers.map(async (user) => {
+          const userOutlets = user.outlet || [];
+          const matchingOutlets = userOutlets.filter((outlet) => {
+            if (
+              loggedInBranches.includes("Others") &&
+              outlet.startsWith("Others:")
+            )
+              return true;
+            return loggedInBranches.some((branch) => outlet.includes(branch));
+          });
 
-        let activeOutletData = null;
-        let latestTimeIn = null;
+          const capitalizedNames = capitalizeWords([
+            user.firstName,
+            user.middleName || "",
+            user.lastName,
+          ]);
+          const fullName = `${capitalizedNames[0]} ${capitalizedNames[2]}`;
 
-        for (const outlet of matchingOutlets) {
-          const attendance = await fetchCurrentAttendance(
-            user.email,
-            outlet,
-            currentDate,
-          );
-          if (attendance.hasTimedIn) {
-            try {
-              const res = await axios.get(`${BASE_URL}/attendance/status`, {
-                params: {
-                  email: user.email,
-                  outlet: outlet.startsWith("Others:") ? "Others" : outlet,
-                  date: currentDate.toISOString().split("T")[0],
-                },
-              });
-              const timeInTimestamp = res.data.timeInTimestamp;
-              if (
-                timeInTimestamp &&
-                (!latestTimeIn ||
-                  new Date(timeInTimestamp) > new Date(latestTimeIn))
-              ) {
-                latestTimeIn = timeInTimestamp;
-                activeOutletData = { outlet, attendance };
+          let activeOutletData = null;
+          let latestTimeIn = null;
+
+          // ✅ All outlets fetched in parallel per user
+          await Promise.all(
+            matchingOutlets.map(async (outlet) => {
+              const attendance = await fetchCurrentAttendance(
+                user.email,
+                outlet,
+                currentDate,
+              );
+              if (attendance.hasTimedIn) {
+                try {
+                  const res = await axios.get(`${BASE_URL}/attendance/status`, {
+                    params: {
+                      email: user.email,
+                      outlet: outlet.startsWith("Others:") ? "Others" : outlet,
+                      date: currentDate.toISOString().split("T")[0],
+                    },
+                  });
+                  const timeInTimestamp = res.data.timeInTimestamp;
+                  if (
+                    timeInTimestamp &&
+                    (!latestTimeIn ||
+                      new Date(timeInTimestamp) > new Date(latestTimeIn))
+                  ) {
+                    latestTimeIn = timeInTimestamp;
+                    activeOutletData = { outlet, attendance };
+                  }
+                } catch {}
               }
-            } catch {}
-          }
-        }
-
-        if (!activeOutletData) {
-          const firstOutlet = matchingOutlets[0];
-          const attendance = await fetchCurrentAttendance(
-            user.email,
-            firstOutlet,
-            currentDate,
+            }),
           );
-          activeOutletData = { outlet: firstOutlet, attendance };
-        }
 
-        processedUsers.push({
-          count: processedUsers.length + 1,
-          role: user.role,
-          fullName,
-          email: user.email,
-          outlet: activeOutletData.attendance.hasTimedIn
-            ? activeOutletData.outlet
-            : "No Attendance",
-          date: displayDate,
-          timeIn: activeOutletData.attendance.timeIn,
-          timeOut: activeOutletData.attendance.timeOut,
-          hasTimedIn: activeOutletData.attendance.hasTimedIn,
-          hasTimedOut: activeOutletData.attendance.hasTimedOut,
-        });
-      }
+          if (!activeOutletData) {
+            const firstOutlet = matchingOutlets[0];
+            const attendance = await fetchCurrentAttendance(
+              user.email,
+              firstOutlet,
+              currentDate,
+            );
+            activeOutletData = { outlet: firstOutlet, attendance };
+          }
+
+          // ✅ Progress updates as each user finishes (out of order is fine)
+          setLoadingProgress((prev) => ({
+            ...prev,
+            current: prev.current + 1,
+          }));
+
+          return {
+            role: user.role,
+            fullName,
+            email: user.email,
+            outlet: activeOutletData.attendance.hasTimedIn
+              ? activeOutletData.outlet
+              : "No Attendance",
+            date: displayDate,
+            timeIn: activeOutletData.attendance.timeIn,
+            timeOut: activeOutletData.attendance.timeOut,
+            hasTimedIn: activeOutletData.attendance.hasTimedIn,
+            hasTimedOut: activeOutletData.attendance.hasTimedOut,
+          };
+        }),
+      );
+
+      // ✅ Re-add count after all results are in order
+      const processedUsers = results.map((u, i) => ({ ...u, count: i + 1 }));
+      const exportableUsers = results.map((u) => ({
+        label: `${u.fullName} — ${u.email}`,
+        email: u.email,
+        fullName: u.fullName,
+      }));
 
       setUserData(processedUsers);
       setAllUsers(exportableUsers);
@@ -783,6 +809,47 @@ export default function Attendance() {
               },
             }}
           >
+            {loading && (
+              <Box sx={{ px: 2, pt: 2 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 0.5,
+                  }}
+                >
+                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                    Loading attendance data…
+                  </span>
+                  <span
+                    style={{ fontSize: 12, color: "#0aafeb", fontWeight: 600 }}
+                  >
+                    {loadingProgress.current} / {loadingProgress.total || "…"}{" "}
+                    users
+                  </span>
+                </Box>
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: 6,
+                    backgroundColor: "#e2e8f0",
+                    borderRadius: 99,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      height: "100%",
+                      borderRadius: 99,
+                      backgroundColor: "#0aafeb",
+                      transition: "width 0.3s ease",
+                      width: loadingProgress.total
+                        ? `${(loadingProgress.current / loadingProgress.total) * 100}%`
+                        : "0%",
+                    }}
+                  />
+                </Box>
+              </Box>
+            )}
             <DataGrid
               rows={filteredData}
               columns={columns}
