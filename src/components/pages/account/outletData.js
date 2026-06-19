@@ -1,10 +1,7 @@
-// ─── Add more accounts and their outlets here ───────────────────────────────
-// Format:
-//   "ACCOUNT_NAME": ["Outlet 1", "Outlet 2", ...]
-
 export const ACCOUNT_OUTLETS = {
+  OFFICE: ["Branch", "CEBU OFFICE", "HEAD OFFICE"],
+
   AFPCES: [
-    "Branch",
     "AFPCES - FB C&X FORT BONIFACIO",
     "AFPCES - BNS C&X NAVAL GATE 3 FORT BONIFACIO",
     "AFPCES CAMP AGUINALDO",
@@ -14,7 +11,6 @@ export const ACCOUNT_OUTLETS = {
     "PUREGOLD PRICE CLUB - LIBERTAD BACOLOD",
   ],
   BROLLEE: [
-    "Branch",
     "GAISANO CAPITAL - MACTAN",
     "GAISANO CAPITAL - CASUNTINGAN",
     "GAISANO CAPITAL - SAVER'SMART BASAK",
