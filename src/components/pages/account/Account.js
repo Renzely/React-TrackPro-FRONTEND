@@ -360,12 +360,12 @@ export default function Account() {
                 }}
               >
                 <MenuItem value="" disabled>
-                  Filter by Client
+                  Filter by Accounts
                 </MenuItem>
-                <MenuItem value="UNFILTERED">All Clients</MenuItem>
-                <MenuItem value="RC">RC Sales Agent</MenuItem>
-                <MenuItem value="UGC">UGC Personnel</MenuItem>
-                <MenuItem value="BMP">BMPOWER</MenuItem>
+                <MenuItem value="UNFILTERED">All Accounts</MenuItem>
+                <MenuItem value="BMPOWER">BMPOWER</MenuItem>
+                <MenuItem value="MERCHANDISER">MERCHANDISER</MenuItem>
+                <MenuItem value="COORDINATOR">COORDINATOR</MenuItem>
               </Select>
             </FormControl>
           </div>

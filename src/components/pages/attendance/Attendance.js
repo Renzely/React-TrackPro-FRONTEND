@@ -66,6 +66,7 @@ export default function Attendance() {
   const [dateBegin, setDateBegin] = React.useState(null);
   const [dateEnd, setDateEnd] = React.useState(null);
   const [exporting, setExporting] = React.useState(false);
+  const [singleSheet, setSingleSheet] = React.useState(false);
   // ─────────────────────────────────────────────────────────────────────────
 
   const handleRoleChange = (event) => setSelectedRoles(event.target.value);
@@ -75,8 +76,8 @@ export default function Attendance() {
       ? userData
       : userData.filter((user) => user.role === selectedRoles);
 
-  const timedInCount = userData.filter((u) => u.hasTimedIn).length;
-  const timedOutCount = userData.filter((u) => u.hasTimedOut).length;
+  const timedInCount = filteredData.filter((u) => u.hasTimedIn).length;
+  const timedOutCount = filteredData.filter((u) => u.hasTimedOut).length;
 
   const columns = [
     {
@@ -502,6 +503,144 @@ export default function Attendance() {
       setExporting(false);
     }
   };
+
+  const handleExportSingleSheet = async () => {
+    if (!exportUsers.length) {
+      alert("Please select at least one user to export.");
+      return;
+    }
+    if (!dateBegin || !dateEnd) {
+      alert("Please select both start and end dates.");
+      return;
+    }
+
+    const bDate = new Date(dateBegin.$d);
+    bDate.setHours(0, 0, 0, 0);
+    const eDate = new Date(dateEnd.$d);
+    eDate.setHours(23, 59, 59, 999);
+
+    if (bDate > eDate) {
+      alert("End date must be the same or later than start date.");
+      return;
+    }
+
+    const startDateStr = bDate.toISOString().split("T")[0];
+    const endDateStr = eDate.toISOString().split("T")[0];
+
+    setExporting(true);
+    try {
+      const wb = XLSX.utils.book_new();
+      const headers = [
+        "#",
+        "Merchandiser",
+        "Date",
+        "Time In",
+        "Time In Location",
+        "Time In Photo",
+        "Time Out",
+        "Time Out Location",
+        "Time Out Photo",
+        "Outlet",
+      ];
+
+      const ws = XLSX.utils.json_to_sheet([]);
+      XLSX.utils.sheet_add_aoa(ws, [headers], { origin: "A1" });
+
+      let rowOffset = 2;
+      let globalCount = 1; // ← running # across all users
+      let anyData = false;
+      // Collect ALL rows first so we can measure col widths accurately
+      const allExportRows = [];
+
+      for (const user of exportUsers) {
+        const attendanceRes = await axios.post(`${BASE_URL}/get-attendance`, {
+          email: user.email,
+          start: startDateStr,
+          end: endDateStr,
+        });
+
+        const logs = attendanceRes.data.data;
+        if (!logs?.length) continue;
+
+        anyData = true;
+
+        const exportRows = logs.map((log) => ({
+          count: globalCount++, // ← continuous numbering
+          fullName: user.fullName,
+          date: formatDateDisplay(log.date)?.date ?? "N/A",
+          timeIn: log.timeIn
+            ? formatDateDisplay(log.timeIn)?.time
+            : "No Time In",
+          timeInLocation: log.timeInLocation ?? "No location",
+          timeInPhoto: log.timeInSelfieUrl ?? "",
+          timeOut: log.timeOut
+            ? formatDateDisplay(log.timeOut)?.time
+            : "No Time Out",
+          timeOutLocation: log.timeOutLocation ?? "No location",
+          timeOutPhoto: log.timeOutSelfieUrl ?? "",
+          outlet: log.outlet ?? "Unknown Outlet",
+        }));
+
+        allExportRows.push(...exportRows);
+
+        XLSX.utils.sheet_add_json(ws, exportRows, {
+          origin: `A${rowOffset}`,
+          skipHeader: true,
+        });
+
+        rowOffset += exportRows.length;
+      }
+
+      if (!anyData) {
+        alert(
+          "No attendance data found for the selected users and date range.",
+        );
+        return;
+      }
+
+      // ── Column widths: match per-user export logic ─────────────────────
+      ws["!cols"] = headers.map((h, i) => {
+        const key = Object.keys(allExportRows[0])[i];
+        const max = Math.max(
+          h.length,
+          ...allExportRows.map((r) => r[key]?.toString().length || 0),
+        );
+        return { wch: max + 2 };
+      });
+
+      // ── Header row styles: bold + centered + background ────────────────
+      headers.forEach((_, c) => {
+        const addr = XLSX.utils.encode_cell({ r: 0, c });
+        if (ws[addr])
+          ws[addr].s = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: "F8FAFC" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+              bottom: { style: "thin", color: { rgb: "E2E8F0" } },
+            },
+          };
+      });
+
+      XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+
+      const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `TrackPro_Attendance_${startDateStr}_to_${endDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error(err);
+      alert("Error exporting data. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
   // ─────────────────────────────────────────────────────────────────────────
 
   const today = new Date().toLocaleDateString("en-PH", {
@@ -702,7 +841,7 @@ export default function Attendance() {
                 </Button>
               </Box>
 
-              {/* Date range + Export button */}
+              {/* Date range + Export buttons */}
               <Box
                 sx={{
                   display: "flex",
@@ -726,6 +865,7 @@ export default function Attendance() {
                   />
                 </LocalizationProvider>
 
+                {/* Per-user workbook (existing behavior) */}
                 <Button
                   onClick={handleExport}
                   variant="contained"
@@ -750,8 +890,36 @@ export default function Attendance() {
                   }}
                 >
                   {exporting
-                    ? `Exporting ${exportUsers.length > 1 ? `(${exportUsers.length} users)` : ""}…`
-                    : `Export${exportUsers.length > 1 ? ` (${exportUsers.length})` : ""} to Excel`}
+                    ? `Exporting…`
+                    : `Export${exportUsers.length > 1 ? ` (${exportUsers.length})` : ""} — Per User`}
+                </Button>
+
+                {/* Single-sheet workbook (new) */}
+                <Button
+                  onClick={handleExportSingleSheet}
+                  variant="outlined"
+                  startIcon={exporting ? null : <FileDownloadIcon />}
+                  disabled={exporting}
+                  sx={{
+                    borderColor: "#0aafeb",
+                    color: "#0aafeb",
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    boxShadow: "none",
+                    whiteSpace: "nowrap",
+                    "&:hover": {
+                      backgroundColor: "#e3f8ff",
+                      borderColor: "#0aafeb",
+                      boxShadow: "none",
+                    },
+                    "&.Mui-disabled": {
+                      borderColor: "#b2e4f7",
+                      color: "#b2e4f7",
+                    },
+                  }}
+                >
+                  {exporting ? `Exporting…` : `Export — Single Sheet`}
                 </Button>
               </Box>
             </Box>
@@ -771,9 +939,10 @@ export default function Attendance() {
                 }}
               >
                 <MenuItem value="" disabled>
-                  Filter by Client
+                  Filter by Accounts
                 </MenuItem>
                 <MenuItem value="UNFILTERED">All Clients</MenuItem>
+                <MenuItem value="BMPOWER">BMPOWER</MenuItem>
                 <MenuItem value="MERCHANDISER">MERCHANDISER</MenuItem>
                 <MenuItem value="COORDINATOR">COORDINATOR</MenuItem>
               </Select>
