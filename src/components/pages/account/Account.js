@@ -13,6 +13,8 @@ import {
   Select,
   FormControl,
   Chip,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
@@ -40,7 +42,10 @@ export default function Account() {
   const [modalEmail, setModalEmail] = React.useState("");
   const [modalPhone, setModalPhone] = React.useState("");
   const [openDialog, setOpenDialog] = React.useState(false);
-
+  const [snackbar, setSnackbar] = React.useState({
+    open: false,
+    message: "",
+  });
   // ── Multi-account + combined outlets ──
   const [selectedAccounts, setSelectedAccounts] = React.useState([]);
   const [selectedOutlets, setSelectedOutlets] = React.useState([]);
@@ -226,8 +231,9 @@ export default function Account() {
 
   async function getUser() {
     try {
-      const loggedInBranch = localStorage.getItem("outlet") || "";
-      const loggedInBranches = loggedInBranch.split(",").map((o) => o.trim());
+      const loggedInBranches = JSON.parse(
+        localStorage.getItem("outlet") || "[]",
+      );
       const response = await axios.post(
         "https://api-trackpro.bmphrc.com/get-all-user",
       );
@@ -273,6 +279,23 @@ export default function Account() {
   }
 
   const handleBranchSave = async () => {
+    // ── validate FIRST, before any save ──
+    if (selectedAccounts.length === 0) {
+      setSnackbar({
+        open: true,
+        message: "Please select at least one Account.",
+      });
+      return;
+    }
+    if (selectedOutlets.length === 0) {
+      setSnackbar({
+        open: true,
+        message: "Please select at least one Outlet.",
+      });
+      return;
+    }
+
+    // ── only runs if validation passed ──
     try {
       await axios.put("https://api-trackpro.bmphrc.com/update-user-branch", {
         email: modalEmail,
@@ -364,8 +387,10 @@ export default function Account() {
                 </MenuItem>
                 <MenuItem value="UNFILTERED">All Accounts</MenuItem>
                 <MenuItem value="BMPOWER">BMPOWER</MenuItem>
+                <MenuItem value="MARABOU">MARABOU</MenuItem>
                 <MenuItem value="MERCHANDISER">MERCHANDISER</MenuItem>
                 <MenuItem value="COORDINATOR">COORDINATOR</MenuItem>
+                <MenuItem value="TACTICAL COMMANDO">TACTICAL COMMANDO</MenuItem>
               </Select>
             </FormControl>
           </div>
@@ -622,6 +647,22 @@ export default function Account() {
               </Stack>
             </Box>
           </Modal>
+
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={3000}
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert
+              severity="warning"
+              variant="filled"
+              onClose={() => setSnackbar({ ...snackbar, open: false })}
+              sx={{ borderRadius: "10px" }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
 
           {/* Status Dialog */}
           <Dialog

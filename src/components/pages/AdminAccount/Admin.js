@@ -323,6 +323,17 @@ export default function Admin() {
   }
 
   const handleBranchSave = async (email) => {
+    // ── validate FIRST, before saving ──
+    if (viewAccounts.length === 0) {
+      Swal.fire({ title: "Select at least one Account", icon: "warning" });
+      return;
+    }
+    if (viewOutlets.length === 0) {
+      Swal.fire({ title: "Select at least one Outlet", icon: "warning" });
+      return;
+    }
+
+    // ── only runs if validation passed ──
     try {
       await axios.put("https://api-trackpro.bmphrc.com/update-admin-outlet", {
         emailAddress: email,
@@ -685,16 +696,13 @@ export default function Admin() {
                     label="Role"
                     sx={{ borderRadius: "10px" }}
                   >
-                    <MenuItem value="COORDINATOR">Coordinator</MenuItem>
+                    <MenuItem value="HR OFFICER">HR Officer</MenuItem>
+                    <MenuItem value="HR HEAD">HR Head</MenuItem>
                     <MenuItem value="ACCOUNT SUPERVISOR">
                       Account Supervisor
                     </MenuItem>
-                    <MenuItem value="OPERATION OFFICER">
-                      Operation Officer
-                    </MenuItem>
-                    <MenuItem value="OPERATION HEAD">Operation Head</MenuItem>
-                    <MenuItem value="SENIOR OPERATION MANAGER">
-                      Senior Operation Manager
+                    <MenuItem value="OPERATION DIRECTOR">
+                      Operation Director
                     </MenuItem>
                   </Select>
                 </FormControl>
