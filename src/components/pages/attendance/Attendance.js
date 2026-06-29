@@ -36,7 +36,12 @@ import MapIcon from "@mui/icons-material/Map";
 import Typography from "@mui/material/Typography";
 
 const XLSX = require("sheetjs-style");
-const BASE_URL = "https://api-trackpro.bmphrc.com/";
+const BASE_URL = "https://api-trackpro.bmphrc.com";
+
+const chunk = (arr, size) =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size),
+  );
 
 const formatDateTime = (dateTime) => {
   if (!dateTime) return null;
@@ -415,7 +420,6 @@ export default function Attendance() {
         total: relevantUsers.length,
       });
 
-      // Build batch payload — one entry per user with their matching outlets
       const batchPayload = relevantUsers.map((user) => {
         const matchingOutlets = (user.outlet || []).filter((outlet) =>
           loggedInBranches.some(
@@ -425,16 +429,24 @@ export default function Attendance() {
         return { email: user.email, outlets: matchingOutlets };
       });
 
-      // ✅ ONE request for all users
-      const batchRes = await axios.post(`${BASE_URL}/attendance/batch-status`, {
-        users: batchPayload,
-        date: currentDate.toISOString().split("T")[0],
-      });
+      const dateStr = currentDate.toISOString().split("T")[0];
+
+      // Split into chunks of 50 users per request (tune as needed)
+      const batches = chunk(batchPayload, 50);
 
       const batchMap = {};
-      batchRes.data.data.forEach((r) => {
-        batchMap[r.email] = r;
-      });
+      for (const batch of batches) {
+        const batchRes = await axios.post(
+          `${BASE_URL}/attendance/batch-status`,
+          {
+            users: batch,
+            date: dateStr,
+          },
+        );
+        batchRes.data.data.forEach((r) => {
+          batchMap[r.email] = r;
+        });
+      }
 
       const processedUsers = relevantUsers.map((user, i) => {
         const capitalizedNames = capitalizeWords([
