@@ -46,7 +46,7 @@ export default function Login() {
         localStorage.setItem("firstName", res.data.firstName);
         localStorage.setItem("lastName", res.data.lastName);
         localStorage.setItem("roleAccount", res.data.roleAccount);
-        localStorage.setItem("outlet", res.data.outlet);
+        localStorage.setItem("outlet", JSON.stringify(res.data.outlet));
         window.location.href = "/view-accounts";
       } else {
         Swal.fire({ title: "Login Failed", text: res.data, icon: "error" });

@@ -24,9 +24,19 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+//MAP IMPORTS
+import { MapContainer } from "react-leaflet/MapContainer";
+import { TileLayer } from "react-leaflet/TileLayer";
+import "leaflet/dist/leaflet.css";
+import markerIconPng from "leaflet/dist/images/marker-icon.png";
+import { Icon } from "leaflet";
+import { Marker, Popup } from "react-leaflet";
+import Modal from "@mui/material/Modal";
+import MapIcon from "@mui/icons-material/Map";
+import Typography from "@mui/material/Typography";
 
 const XLSX = require("sheetjs-style");
-const BASE_URL = "https://api-trackpro.bmphrc.com";
+const BASE_URL = "https://api-trackpro.bmphrc.com/";
 
 const formatDateTime = (dateTime) => {
   if (!dateTime) return null;
@@ -60,6 +70,11 @@ export default function Attendance() {
     current: 0,
     total: 0,
   });
+  const normalize = (s) =>
+    s
+      ?.toLowerCase()
+      .replace(/[\s\u2018\u2019\u2014\u2013'".,\-]/g, "")
+      .trim() ?? "";
   // ── Export panel state ───────────────────────────────────────────────────
   const [allUsers, setAllUsers] = React.useState([]);
   const [exportUsers, setExportUsers] = React.useState([]); // ← array now
@@ -68,6 +83,37 @@ export default function Attendance() {
   const [exporting, setExporting] = React.useState(false);
   const [singleSheet, setSingleSheet] = React.useState(false);
   // ─────────────────────────────────────────────────────────────────────────
+
+  // MAP MODAL STATE
+
+  // MAP MODAL STATE
+
+  const [mapOpen, setMapOpen] = React.useState(false);
+  const [mapLat, setMapLat] = React.useState(null);
+  const [mapLng, setMapLng] = React.useState(null);
+  const [mapCity, setMapCity] = React.useState("");
+  const [mapStreet, setMapStreet] = React.useState("");
+
+  const openMapModal = async (coords) => {
+    const { latitude: lat, longitude: lng } = coords || {};
+    if (!lat || !lng) {
+      alert("Coordinates unavailable.");
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      );
+      const data = await res.json();
+      setMapCity(data.address?.city || "Unknown City");
+      setMapStreet(data.address?.road || "Unknown Street");
+      setMapLat(lat);
+      setMapLng(lng);
+      setMapOpen(true);
+    } catch {
+      alert("Unable to fetch location.");
+    }
+  };
 
   const handleRoleChange = (event) => setSelectedRoles(event.target.value);
 
@@ -134,6 +180,44 @@ export default function Attendance() {
         />
       ),
     },
+
+    // ✅ Time In Map button
+    {
+      field: "timeInMap",
+      headerName: "In Map",
+      width: 80,
+      headerClassName: "tp-header",
+      sortable: false,
+      renderCell: (params) => {
+        const coords = params.row.timeInCoordinates;
+        const avail = coords?.latitude && coords?.longitude;
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => openMapModal(coords)}
+            disabled={!avail}
+            sx={{
+              backgroundColor: avail ? "#0aafeb" : "#e0e0e0",
+              color: avail ? "#fff" : "#aaa",
+              minWidth: 36,
+              width: 36,
+              height: 32,
+              borderRadius: "8px",
+              boxShadow: "none",
+              padding: 0,
+              "&:hover": {
+                backgroundColor: avail ? "#0096c7" : "#e0e0e0",
+                boxShadow: "none",
+              },
+            }}
+          >
+            <MapIcon sx={{ fontSize: 16 }} />
+          </Button>
+        );
+      },
+    },
+
     {
       field: "timeOut",
       headerName: "Time Out",
@@ -154,6 +238,77 @@ export default function Attendance() {
         />
       ),
     },
+
+    // ✅ Time Out Map button
+    {
+      field: "timeOutMap",
+      headerName: "Out Map",
+      width: 80,
+      headerClassName: "tp-header",
+      sortable: false,
+      renderCell: (params) => {
+        const coords = params.row.timeOutCoordinates;
+        const avail = coords?.latitude && coords?.longitude;
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => openMapModal(coords)}
+            disabled={!avail}
+            sx={{
+              backgroundColor: avail ? "#c9184a" : "#e0e0e0",
+              color: avail ? "#fff" : "#aaa",
+              minWidth: 36,
+              width: 36,
+              height: 32,
+              borderRadius: "8px",
+              boxShadow: "none",
+              padding: 0,
+              "&:hover": {
+                backgroundColor: avail ? "#a01040" : "#e0e0e0",
+                boxShadow: "none",
+              },
+            }}
+          >
+            <MapIcon sx={{ fontSize: 16 }} />
+          </Button>
+        );
+      },
+    },
+
+    // ✅ Completed shifts column
+    {
+      field: "completedShifts",
+      headerName: "Shifts Done",
+      width: 110,
+      headerClassName: "tp-header",
+      renderCell: (params) => {
+        const done = params.row.completedShifts ?? 0;
+        const total = params.row.shiftCount ?? 0;
+        if (total === 0)
+          return (
+            <Chip
+              label="No shifts"
+              size="small"
+              sx={{ backgroundColor: "#f5f5f5", color: "#aaa", fontSize: 11 }}
+            />
+          );
+        return (
+          <Chip
+            label={`${done} / ${total} done`}
+            size="small"
+            sx={{
+              backgroundColor: done === total ? "#e6f9f0" : "#fff8e1",
+              color: done === total ? "#059669" : "#b45309",
+              fontWeight: 600,
+              fontSize: 11,
+              border: `1px solid ${done === total ? "#a7f3d0" : "#fde68a"}`,
+            }}
+          />
+        );
+      },
+    },
+
     {
       field: "action",
       headerName: "History",
@@ -232,126 +387,93 @@ export default function Attendance() {
   const getUser = React.useCallback(async () => {
     setLoading(true);
     try {
+      const loggedInBranches = JSON.parse(
+        localStorage.getItem("outlet") || "[]",
+      );
+      if (!loggedInBranches.length) return;
+
       const response = await axios.post(`${BASE_URL}/get-all-user`, {
         test: "test",
       });
       const data = response.data.data;
 
-      const loggedInBranch = localStorage.getItem("outlet");
-      if (!loggedInBranch) return;
-      const loggedInBranches = loggedInBranch.split(",").map((b) => b.trim());
       const currentDate = new Date();
       const displayDate = `${String(currentDate.getDate()).padStart(2, "0")}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${currentDate.getFullYear()}`;
 
+      // Filter relevant users
       const relevantUsers = data.filter((user) => {
         const userOutlets = user.outlet || [];
-        return userOutlets.some((outlet) => {
-          if (
-            loggedInBranches.includes("Others") &&
-            outlet.startsWith("Others:")
-          )
-            return true;
-          return loggedInBranches.some((branch) => outlet.includes(branch));
-        });
+        return userOutlets.some((outlet) =>
+          loggedInBranches.some(
+            (branch) => normalize(outlet) === normalize(branch),
+          ),
+        );
       });
 
-      setLoadingProgress({ current: 0, total: relevantUsers.length });
+      setLoadingProgress({
+        current: relevantUsers.length,
+        total: relevantUsers.length,
+      });
 
-      const results = await Promise.all(
-        relevantUsers.map(async (user) => {
-          const userOutlets = user.outlet || [];
-          const matchingOutlets = userOutlets.filter((outlet) => {
-            if (
-              loggedInBranches.includes("Others") &&
-              outlet.startsWith("Others:")
-            )
-              return true;
-            return loggedInBranches.some((branch) => outlet.includes(branch));
-          });
+      // Build batch payload — one entry per user with their matching outlets
+      const batchPayload = relevantUsers.map((user) => {
+        const matchingOutlets = (user.outlet || []).filter((outlet) =>
+          loggedInBranches.some(
+            (branch) => normalize(outlet) === normalize(branch),
+          ),
+        );
+        return { email: user.email, outlets: matchingOutlets };
+      });
 
-          const capitalizedNames = capitalizeWords([
-            user.firstName,
-            user.middleName || "",
-            user.lastName,
-          ]);
-          const fullName = `${capitalizedNames[0]} ${capitalizedNames[2]}`;
+      // ✅ ONE request for all users
+      const batchRes = await axios.post(`${BASE_URL}/attendance/batch-status`, {
+        users: batchPayload,
+        date: currentDate.toISOString().split("T")[0],
+      });
 
-          let activeOutletData = null;
-          let latestTimeIn = null;
+      const batchMap = {};
+      batchRes.data.data.forEach((r) => {
+        batchMap[r.email] = r;
+      });
 
-          // ✅ All outlets fetched in parallel per user
-          await Promise.all(
-            matchingOutlets.map(async (outlet) => {
-              const attendance = await fetchCurrentAttendance(
-                user.email,
-                outlet,
-                currentDate,
-              );
-              if (attendance.hasTimedIn) {
-                try {
-                  const res = await axios.get(`${BASE_URL}/attendance/status`, {
-                    params: {
-                      email: user.email,
-                      outlet: outlet.startsWith("Others:") ? "Others" : outlet,
-                      date: currentDate.toISOString().split("T")[0],
-                    },
-                  });
-                  const timeInTimestamp = res.data.timeInTimestamp;
-                  if (
-                    timeInTimestamp &&
-                    (!latestTimeIn ||
-                      new Date(timeInTimestamp) > new Date(latestTimeIn))
-                  ) {
-                    latestTimeIn = timeInTimestamp;
-                    activeOutletData = { outlet, attendance };
-                  }
-                } catch {}
-              }
-            }),
-          );
+      const processedUsers = relevantUsers.map((user, i) => {
+        const capitalizedNames = capitalizeWords([
+          user.firstName,
+          user.middleName || "",
+          user.lastName,
+        ]);
+        const fullName = `${capitalizedNames[0]} ${capitalizedNames[2]}`;
+        const result = batchMap[user.email];
 
-          if (!activeOutletData) {
-            const firstOutlet = matchingOutlets[0];
-            const attendance = await fetchCurrentAttendance(
-              user.email,
-              firstOutlet,
-              currentDate,
-            );
-            activeOutletData = { outlet: firstOutlet, attendance };
-          }
-
-          // ✅ Progress updates as each user finishes (out of order is fine)
-          setLoadingProgress((prev) => ({
-            ...prev,
-            current: prev.current + 1,
-          }));
-
-          return {
-            role: user.role,
-            fullName,
-            email: user.email,
-            outlet: activeOutletData.attendance.hasTimedIn
-              ? activeOutletData.outlet
-              : "No Attendance",
-            date: displayDate,
-            timeIn: activeOutletData.attendance.timeIn,
-            timeOut: activeOutletData.attendance.timeOut,
-            hasTimedIn: activeOutletData.attendance.hasTimedIn,
-            hasTimedOut: activeOutletData.attendance.hasTimedOut,
-          };
-        }),
-      );
-
-      // ✅ Re-add count after all results are in order
-      const processedUsers = results.map((u, i) => ({ ...u, count: i + 1 }));
-      const exportableUsers = results.map((u) => ({
-        label: `${u.fullName} — ${u.email}`,
-        email: u.email,
-        fullName: u.fullName,
-      }));
-
+        return {
+          count: i + 1,
+          role: user.role,
+          fullName,
+          email: user.email,
+          outlet: result?.hasTimedIn ? result.outlet : "No Attendance",
+          date: displayDate,
+          timeIn: result?.timeInTimestamp
+            ? formatDateTime(result.timeInTimestamp)
+            : "No Time In",
+          timeOut: result?.timeOutTimestamp
+            ? formatDateTime(result.timeOutTimestamp)
+            : "No Time Out",
+          hasTimedIn: result?.hasTimedIn ?? false,
+          hasTimedOut: result?.hasTimedOut ?? false,
+          timeInCoordinates: result?.timeInCoordinates ?? null, // ✅ new
+          timeOutCoordinates: result?.timeOutCoordinates ?? null, // ✅ new
+          shiftCount: result?.shiftCount ?? 0, // ✅ new
+          completedShifts: result?.completedShifts ?? 0, // ✅ new
+        };
+      });
       setUserData(processedUsers);
-      setAllUsers(exportableUsers);
+      setAllUsers(
+        processedUsers.map((u) => ({
+          label: `${u.fullName} — ${u.email}`,
+          email: u.email,
+          fullName: u.fullName,
+        })),
+      );
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
@@ -392,7 +514,8 @@ export default function Attendance() {
       const wb = XLSX.utils.book_new();
       const headers = [
         "#",
-        "Merchandiser",
+        "Name",
+        "Role",
         "Date",
         "Time In",
         "Time In Location",
@@ -423,6 +546,7 @@ export default function Attendance() {
           const exportRows = logs.map((log, idx) => ({
             count: idx + 1,
             fullName: user.fullName,
+            role: log.role ?? "N/A",
             date: formatDateDisplay(log.date)?.date ?? "N/A",
             timeIn: log.timeIn
               ? formatDateDisplay(log.timeIn)?.time
@@ -532,7 +656,8 @@ export default function Attendance() {
       const wb = XLSX.utils.book_new();
       const headers = [
         "#",
-        "Merchandiser",
+        "Name",
+        "Role",
         "Date",
         "Time In",
         "Time In Location",
@@ -567,6 +692,7 @@ export default function Attendance() {
         const exportRows = logs.map((log) => ({
           count: globalCount++, // ← continuous numbering
           fullName: user.fullName,
+          role: log.role ?? "N/A",
           date: formatDateDisplay(log.date)?.date ?? "N/A",
           timeIn: log.timeIn
             ? formatDateDisplay(log.timeIn)?.time
@@ -943,8 +1069,10 @@ export default function Attendance() {
                 </MenuItem>
                 <MenuItem value="UNFILTERED">All Clients</MenuItem>
                 <MenuItem value="BMPOWER">BMPOWER</MenuItem>
+                <MenuItem value="MARABOU">MARABOU</MenuItem>
                 <MenuItem value="MERCHANDISER">MERCHANDISER</MenuItem>
                 <MenuItem value="COORDINATOR">COORDINATOR</MenuItem>
+                <MenuItem value="TACTICAL COMMANDO">TACTICAL COMMANDO</MenuItem>
               </Select>
             </FormControl>
           </div>
@@ -1043,6 +1171,57 @@ export default function Attendance() {
               sx={{ minHeight: 400 }}
             />
           </Box>
+          <Modal open={mapOpen} onClose={() => setMapOpen(false)}>
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 480,
+                height: 440,
+                bgcolor: "#fff",
+                borderRadius: "16px",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+                p: 2,
+                overflow: "hidden",
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600, color: "#374151", marginBottom: 1 }}
+              >
+                📍 {mapCity}, {mapStreet}
+              </Typography>
+              {mapLat && mapLng && (
+                <MapContainer
+                  center={[mapLat, mapLng]}
+                  zoom={17}
+                  scrollWheelZoom={false}
+                  style={{ height: "360px", width: "100%", borderRadius: 10 }}
+                >
+                  <TileLayer
+                    attribution="&copy; OpenStreetMap contributors"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker
+                    position={[mapLat, mapLng]}
+                    icon={
+                      new Icon({
+                        iconUrl: markerIconPng,
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                      })
+                    }
+                  >
+                    <Popup>
+                      {mapCity}, {mapStreet}
+                    </Popup>
+                  </Marker>
+                </MapContainer>
+              )}
+            </Box>
+          </Modal>
         </Box>
       </Box>
     </div>
