@@ -37,10 +37,11 @@ export default function Sidebar() {
   const firstName = localStorage.getItem("firstName") || "User";
 
   const showAdmin = [
-    "ACCOUNT SUPERVISOR",
-    "OPERATION OFFICER",
-    "OPERATION HEAD",
-    "SENIOR OPERATION MANAGER",
+    "SENOIR ACCOUNT SUPERVISOR",
+    "HR OFFICER",
+    "HR HEAD",
+    "MIS",
+    "OPERATION DIRECTOR",
   ].includes(roleAccount);
 
   const initials = firstName.charAt(0).toUpperCase();
