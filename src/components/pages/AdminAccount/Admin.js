@@ -701,6 +701,9 @@ export default function Admin() {
                     <MenuItem value="ACCOUNT SUPERVISOR">
                       Account Supervisor
                     </MenuItem>
+                    <MenuItem value="SENOIR ACCOUNT SUPERVISOR">
+                      Senoir Account Supervisor
+                    </MenuItem>
                     <MenuItem value="OPERATION DIRECTOR">
                       Operation Director
                     </MenuItem>

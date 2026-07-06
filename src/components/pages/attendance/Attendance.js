@@ -24,6 +24,11 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+//PHOTO IMPORTS
+
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+
 //MAP IMPORTS
 import { MapContainer } from "react-leaflet/MapContainer";
 import { TileLayer } from "react-leaflet/TileLayer";
@@ -75,29 +80,28 @@ export default function Attendance() {
     current: 0,
     total: 0,
   });
-  const normalize = (s) =>
-    s
-      ?.toLowerCase()
-      .replace(/[\s\u2018\u2019\u2014\u2013'".,\-]/g, "")
-      .trim() ?? "";
-  // ── Export panel state ───────────────────────────────────────────────────
+
   const [allUsers, setAllUsers] = React.useState([]);
   const [exportUsers, setExportUsers] = React.useState([]); // ← array now
   const [dateBegin, setDateBegin] = React.useState(null);
   const [dateEnd, setDateEnd] = React.useState(null);
   const [exporting, setExporting] = React.useState(false);
   const [singleSheet, setSingleSheet] = React.useState(false);
-  // ─────────────────────────────────────────────────────────────────────────
 
-  // MAP MODAL STATE
-
-  // MAP MODAL STATE
+  const [photoOpen, setPhotoOpen] = React.useState(false);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = React.useState("");
 
   const [mapOpen, setMapOpen] = React.useState(false);
   const [mapLat, setMapLat] = React.useState(null);
   const [mapLng, setMapLng] = React.useState(null);
   const [mapCity, setMapCity] = React.useState("");
   const [mapStreet, setMapStreet] = React.useState("");
+
+  const normalize = (s) =>
+    s
+      ?.toLowerCase()
+      .replace(/[\s\u2018\u2019\u2014\u2013'".,\-]/g, "")
+      .trim() ?? "";
 
   const openMapModal = async (coords) => {
     const { latitude: lat, longitude: lng } = coords || {};
@@ -118,6 +122,24 @@ export default function Attendance() {
     } catch {
       alert("Unable to fetch location.");
     }
+  };
+
+  // ── CHANGED: build date strings from local Y/M/D, not toISOString (fixes June 30 leak)
+  const toLocalDateStr = (d) => {
+    const dt = new Date(d);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, "0");
+    const day = String(dt.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  const openPhotoModal = (url) => {
+    if (!url) {
+      alert("No selfie available.");
+      return;
+    }
+    setSelectedPhotoUrl(url);
+    setPhotoOpen(true);
   };
 
   const handleRoleChange = (event) => setSelectedRoles(event.target.value);
@@ -185,7 +207,6 @@ export default function Attendance() {
         />
       ),
     },
-
     // ✅ Time In Map button
     {
       field: "timeInMap",
@@ -222,7 +243,44 @@ export default function Attendance() {
         );
       },
     },
-
+    {
+      field: "timeInPhoto",
+      headerName: "In Photo",
+      width: 90,
+      headerClassName: "tp-header",
+      sortable: false,
+      renderCell: (params) => {
+        const url = params.row.timeInSelfieUrl;
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => openPhotoModal(url)}
+            disabled={!url}
+            sx={{
+              backgroundColor: url ? "#0aafeb" : "#e0e0e0",
+              color: url ? "#fff" : "#aaa",
+              minWidth: 36,
+              width: 36,
+              height: 32,
+              borderRadius: "8px",
+              boxShadow: "none",
+              padding: 0,
+              "&:hover": {
+                backgroundColor: url ? "#0096c7" : "#e0e0e0",
+                boxShadow: "none",
+              },
+            }}
+          >
+            {url ? (
+              <VisibilityIcon sx={{ fontSize: 16 }} />
+            ) : (
+              <VisibilityOffIcon sx={{ fontSize: 16 }} />
+            )}
+          </Button>
+        );
+      },
+    },
     {
       field: "timeOut",
       headerName: "Time Out",
@@ -243,8 +301,6 @@ export default function Attendance() {
         />
       ),
     },
-
-    // ✅ Time Out Map button
     {
       field: "timeOutMap",
       headerName: "Out Map",
@@ -280,8 +336,44 @@ export default function Attendance() {
         );
       },
     },
-
-    // ✅ Completed shifts column
+    {
+      field: "timeOutPhoto",
+      headerName: "Out Photo",
+      width: 90,
+      headerClassName: "tp-header",
+      sortable: false,
+      renderCell: (params) => {
+        const url = params.row.timeOutSelfieUrl;
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => openPhotoModal(url)}
+            disabled={!url}
+            sx={{
+              backgroundColor: url ? "#c9184a" : "#e0e0e0",
+              color: url ? "#fff" : "#aaa",
+              minWidth: 36,
+              width: 36,
+              height: 32,
+              borderRadius: "8px",
+              boxShadow: "none",
+              padding: 0,
+              "&:hover": {
+                backgroundColor: url ? "#a01040" : "#e0e0e0",
+                boxShadow: "none",
+              },
+            }}
+          >
+            {url ? (
+              <VisibilityIcon sx={{ fontSize: 16 }} />
+            ) : (
+              <VisibilityOffIcon sx={{ fontSize: 16 }} />
+            )}
+          </Button>
+        );
+      },
+    },
     {
       field: "completedShifts",
       headerName: "Shifts Done",
@@ -472,10 +564,12 @@ export default function Attendance() {
             : "No Time Out",
           hasTimedIn: result?.hasTimedIn ?? false,
           hasTimedOut: result?.hasTimedOut ?? false,
-          timeInCoordinates: result?.timeInCoordinates ?? null, // ✅ new
-          timeOutCoordinates: result?.timeOutCoordinates ?? null, // ✅ new
-          shiftCount: result?.shiftCount ?? 0, // ✅ new
-          completedShifts: result?.completedShifts ?? 0, // ✅ new
+          timeInCoordinates: result?.timeInCoordinates ?? null,
+          timeOutCoordinates: result?.timeOutCoordinates ?? null,
+          timeInSelfieUrl: result?.timeInSelfieUrl ?? null,
+          timeOutSelfieUrl: result?.timeOutSelfieUrl ?? null,
+          shiftCount: result?.shiftCount ?? 0,
+          completedShifts: result?.completedShifts ?? 0,
         };
       });
       setUserData(processedUsers);
@@ -497,149 +591,6 @@ export default function Attendance() {
     getUser();
   }, [getUser]);
 
-  // ── Export handler (multi-user, one sheet per user) ───────────────────
-  const handleExport = async () => {
-    if (!exportUsers.length) {
-      alert("Please select at least one user to export.");
-      return;
-    }
-    if (!dateBegin || !dateEnd) {
-      alert("Please select both start and end dates.");
-      return;
-    }
-
-    const bDate = new Date(dateBegin.$d);
-    bDate.setHours(0, 0, 0, 0);
-    const eDate = new Date(dateEnd.$d);
-    eDate.setHours(23, 59, 59, 999);
-
-    if (bDate > eDate) {
-      alert("End date must be the same or later than start date.");
-      return;
-    }
-
-    const startDateStr = bDate.toISOString().split("T")[0];
-    const endDateStr = eDate.toISOString().split("T")[0];
-
-    setExporting(true);
-    try {
-      const wb = XLSX.utils.book_new();
-      const headers = [
-        "#",
-        "Name",
-        "Role",
-        "Date",
-        "Time In",
-        "Time In Location",
-        "Time In Photo",
-        "Time Out",
-        "Time Out Location",
-        "Time Out Photo",
-        "Outlet",
-      ];
-
-      let anyData = false;
-
-      for (const user of exportUsers) {
-        const attendanceRes = await axios.post(`${BASE_URL}/get-attendance`, {
-          email: user.email,
-          start: startDateStr,
-          end: endDateStr,
-        });
-
-        const logs = attendanceRes.data.data;
-
-        // Still add an empty sheet so the user knows this person had no data
-        const ws = XLSX.utils.json_to_sheet([]);
-        XLSX.utils.sheet_add_aoa(ws, [headers], { origin: "A1" });
-
-        if (logs?.length) {
-          anyData = true;
-          const exportRows = logs.map((log, idx) => ({
-            count: idx + 1,
-            fullName: user.fullName,
-            role: log.role ?? "N/A",
-            date: formatDateDisplay(log.date)?.date ?? "N/A",
-            timeIn: log.timeIn
-              ? formatDateDisplay(log.timeIn)?.time
-              : "No Time In",
-            timeInLocation: log.timeInLocation ?? "No location",
-            timeInPhoto: log.timeInSelfieUrl ?? "",
-            timeOut: log.timeOut
-              ? formatDateDisplay(log.timeOut)?.time
-              : "No Time Out",
-            timeOutLocation: log.timeOutLocation ?? "No location",
-            timeOutPhoto: log.timeOutSelfieUrl ?? "",
-            outlet: log.outlet ?? "Unknown Outlet",
-          }));
-
-          XLSX.utils.sheet_add_json(ws, exportRows, {
-            origin: "A2",
-            skipHeader: true,
-          });
-
-          ws["!cols"] = headers.map((h, i) => {
-            const key = Object.keys(exportRows[0])[i];
-            const max = Math.max(
-              h.length,
-              ...exportRows.map((r) => r[key]?.toString().length || 0),
-            );
-            return { wch: max + 2 };
-          });
-        } else {
-          // No data row
-          XLSX.utils.sheet_add_aoa(
-            ws,
-            [["No attendance data for this date range."]],
-            { origin: "A2" },
-          );
-          ws["!cols"] = headers.map(() => ({ wch: 20 }));
-        }
-
-        // Style header row
-        headers.forEach((_, c) => {
-          const addr = XLSX.utils.encode_cell({ r: 0, c });
-          if (ws[addr])
-            ws[addr].s = {
-              font: { bold: true },
-              alignment: { horizontal: "center", vertical: "center" },
-            };
-        });
-
-        // Sheet name: first 31 chars of name (Excel sheet name limit)
-        const sheetName = user.fullName.slice(0, 31);
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-      }
-
-      if (!anyData && exportUsers.length === 1) {
-        alert("No attendance data found for the selected user and date range.");
-        return;
-      }
-
-      const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-
-      const fileName =
-        exportUsers.length === 1
-          ? `TrackPro_${exportUsers[0].fullName.replace(/ /g, "_")}_${startDateStr}_to_${endDateStr}.xlsx`
-          : `TrackPro_Attendance_${startDateStr}_to_${endDateStr}.xlsx`;
-
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error(err);
-      alert("Error exporting data. Please try again.");
-    } finally {
-      setExporting(false);
-    }
-  };
-
   const handleExportSingleSheet = async () => {
     if (!exportUsers.length) {
       alert("Please select at least one user to export.");
@@ -660,8 +611,9 @@ export default function Attendance() {
       return;
     }
 
-    const startDateStr = bDate.toISOString().split("T")[0];
-    const endDateStr = eDate.toISOString().split("T")[0];
+    const startDateStr = toLocalDateStr(bDate);
+    const endDateStr = toLocalDateStr(eDate);
+    // ── END CHANGED
 
     setExporting(true);
     try {
@@ -717,6 +669,10 @@ export default function Attendance() {
           timeOutLocation: log.timeOutLocation ?? "No location",
           timeOutPhoto: log.timeOutSelfieUrl ?? "",
           outlet: log.outlet ?? "Unknown Outlet",
+          // ── CHANGED: keep raw date + email for the summary dedupe
+          _rawDate: log.date,
+          _email: user.email,
+          // ── END CHANGED
         }));
 
         allExportRows.push(...exportRows);
@@ -736,7 +692,6 @@ export default function Attendance() {
         return;
       }
 
-      // ── Column widths: match per-user export logic ─────────────────────
       ws["!cols"] = headers.map((h, i) => {
         const key = Object.keys(allExportRows[0])[i];
         const max = Math.max(
@@ -746,7 +701,6 @@ export default function Attendance() {
         return { wch: max + 2 };
       });
 
-      // ── Header row styles: bold + centered + background ────────────────
       headers.forEach((_, c) => {
         const addr = XLSX.utils.encode_cell({ r: 0, c });
         if (ws[addr])
@@ -761,6 +715,64 @@ export default function Attendance() {
       });
 
       XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+
+      // ── CHANGED: NEW Summary sheet — one attendance per user per day (earliest time-in) ──
+      const summaryHeaders = ["#", "Name", "Role", "Date", "Time In", "Outlet"];
+      const seen = new Map(); // key = email|rawDate → first row encountered
+
+      for (const row of allExportRows) {
+        const key = `${row._email}|${row._rawDate}`;
+        if (!seen.has(key)) {
+          seen.set(key, {
+            fullName: row.fullName,
+            role: row.role,
+            date: row.date,
+            timeIn: row.timeIn,
+            outlet: row.outlet,
+          });
+        }
+      }
+
+      const summaryRows = [...seen.values()].map((r, i) => ({
+        count: i + 1,
+        fullName: r.fullName,
+        role: r.role,
+        date: r.date,
+        timeIn: r.timeIn,
+        outlet: r.outlet,
+      }));
+
+      const ws2 = XLSX.utils.json_to_sheet([]);
+      XLSX.utils.sheet_add_aoa(ws2, [summaryHeaders], { origin: "A1" });
+      XLSX.utils.sheet_add_json(ws2, summaryRows, {
+        origin: "A2",
+        skipHeader: true,
+      });
+
+      ws2["!cols"] = summaryHeaders.map((h, i) => {
+        const key = Object.keys(summaryRows[0] || { a: "" })[i];
+        const max = Math.max(
+          h.length,
+          ...summaryRows.map((r) => r[key]?.toString().length || 0),
+        );
+        return { wch: max + 2 };
+      });
+
+      summaryHeaders.forEach((_, c) => {
+        const addr = XLSX.utils.encode_cell({ r: 0, c });
+        if (ws2[addr])
+          ws2[addr].s = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: "F8FAFC" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+              bottom: { style: "thin", color: { rgb: "E2E8F0" } },
+            },
+          };
+      });
+
+      XLSX.utils.book_append_sheet(wb, ws2, "Summary (1 per day)");
+      // ── END CHANGED
 
       const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
       const blob = new Blob([buffer], {
@@ -779,7 +791,6 @@ export default function Attendance() {
       setExporting(false);
     }
   };
-  // ─────────────────────────────────────────────────────────────────────────
 
   const today = new Date().toLocaleDateString("en-PH", {
     weekday: "long",
@@ -1003,35 +1014,6 @@ export default function Attendance() {
                   />
                 </LocalizationProvider>
 
-                {/* Per-user workbook (existing behavior) */}
-                <Button
-                  onClick={handleExport}
-                  variant="contained"
-                  startIcon={exporting ? null : <FileDownloadIcon />}
-                  disabled={exporting}
-                  sx={{
-                    backgroundColor: "#0aafeb",
-                    color: "#fff",
-                    borderRadius: "10px",
-                    textTransform: "none",
-                    fontWeight: 600,
-                    boxShadow: "none",
-                    whiteSpace: "nowrap",
-                    "&:hover": {
-                      backgroundColor: "#0096c7",
-                      boxShadow: "none",
-                    },
-                    "&.Mui-disabled": {
-                      backgroundColor: "#b2e4f7",
-                      color: "#fff",
-                    },
-                  }}
-                >
-                  {exporting
-                    ? `Exporting…`
-                    : `Export${exportUsers.length > 1 ? ` (${exportUsers.length})` : ""} — Per User`}
-                </Button>
-
                 {/* Single-sheet workbook (new) */}
                 <Button
                   onClick={handleExportSingleSheet}
@@ -1232,6 +1214,60 @@ export default function Attendance() {
                   </Marker>
                 </MapContainer>
               )}
+            </Box>
+          </Modal>
+          <Modal open={photoOpen} onClose={() => setPhotoOpen(false)}>
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 420,
+                bgcolor: "#fff",
+                borderRadius: "16px",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 600,
+                  color: "#374151",
+                  alignSelf: "flex-start",
+                }}
+              >
+                Selfie Photo
+              </Typography>
+              {selectedPhotoUrl ? (
+                <img
+                  src={selectedPhotoUrl}
+                  alt="Selfie"
+                  style={{
+                    width: "100%",
+                    borderRadius: 10,
+                    maxHeight: 360,
+                    objectFit: "contain",
+                  }}
+                />
+              ) : (
+                <Typography color="text.secondary">
+                  No photo available.
+                </Typography>
+              )}
+              <Button
+                onClick={() => setPhotoOpen(false)}
+                variant="outlined"
+                size="small"
+                sx={{ borderRadius: "10px", textTransform: "none" }}
+              >
+                Close
+              </Button>
             </Box>
           </Modal>
         </Box>
