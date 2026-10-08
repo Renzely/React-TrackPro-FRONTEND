@@ -56,6 +56,8 @@ export default function Account() {
     "OPERATION OFFICER",
     "OPERATION HEAD",
     "COORDINATOR",
+    "HR OFFICER",
+    "MIS",
   ];
   const isAllowed = allowedRoles.includes(roleAccount);
 
