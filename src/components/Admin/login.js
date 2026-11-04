@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Navigate } from "react-router-dom";
 import {
   TextField,
   Button,
@@ -16,6 +17,11 @@ import "./login.css";
 export default function Login() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "admin";
+  if (isLoggedIn) {
+    return <Navigate to="/view-dashboard" replace />;
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault();

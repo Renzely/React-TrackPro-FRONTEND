@@ -100,9 +100,26 @@ export default function ViewAttendance() {
         requestBody,
       );
       if (response.data.success) {
-        const formattedData = response.data.data.map((record, index) => ({
+        // ── NEW: sort newest-first by raw timeIn (fall back to date) ──
+        const sorted = [...response.data.data].sort((a, b) => {
+          const aT = a.timeIn
+            ? new Date(a.timeIn).getTime()
+            : a.date
+              ? new Date(a.date).getTime()
+              : 0;
+          const bT = b.timeIn
+            ? new Date(b.timeIn).getTime()
+            : b.date
+              ? new Date(b.date).getTime()
+              : 0;
+          return bT - aT; // descending = latest on top
+        });
+        // ── END NEW ──
+
+        const formattedData = sorted.map((record, index) => ({
           ...record,
           id: index + 1,
+          count: index + 1, // ← re-number so # matches the new order
           email,
           timeIn: record.timeIn
             ? formatDateTime(record.timeIn).time
