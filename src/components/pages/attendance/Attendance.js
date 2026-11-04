@@ -489,6 +489,10 @@ export default function Attendance() {
       );
       if (!loggedInBranches.length) return;
 
+      const roleAccount = localStorage.getItem("roleAccount") || "";
+      const logisticsRoles = ["LOGISTICS HEAD", "LOGISTICS ACCOUNT SUPERVISOR"];
+      const restrictToSpx = logisticsRoles.includes(roleAccount);
+
       const response = await axios.post(`${BASE_URL}/get-all-user`, {
         test: "test",
       });
@@ -497,14 +501,24 @@ export default function Attendance() {
       const currentDate = new Date();
       const displayDate = `${String(currentDate.getDate()).padStart(2, "0")}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${currentDate.getFullYear()}`;
 
-      // Filter relevant users
+      const branchSet = new Set(loggedInBranches.map((b) => normalize(b)));
+
       const relevantUsers = data.filter((user) => {
-        const userOutlets = user.outlet || [];
-        return userOutlets.some((outlet) =>
-          loggedInBranches.some(
-            (branch) => normalize(outlet) === normalize(branch),
-          ),
+        // branch match (unchanged)
+        const inBranch = (user.outlet || []).some((o) =>
+          branchSet.has(normalize(o)),
         );
+        if (!inBranch) return false;
+
+        // ── NEW: if logistics role, only SPX COORDINATOR passes
+        if (
+          restrictToSpx &&
+          normalize(user.role) !== normalize("SPX COORDINATOR")
+        ) {
+          return false;
+        }
+
+        return true;
       });
 
       setLoadingProgress({
@@ -513,10 +527,8 @@ export default function Attendance() {
       });
 
       const batchPayload = relevantUsers.map((user) => {
-        const matchingOutlets = (user.outlet || []).filter((outlet) =>
-          loggedInBranches.some(
-            (branch) => normalize(outlet) === normalize(branch),
-          ),
+        const matchingOutlets = (user.outlet || []).filter((o) =>
+          branchSet.has(normalize(o)),
         );
         return { email: user.email, outlets: matchingOutlets };
       });
@@ -572,6 +584,25 @@ export default function Attendance() {
           completedShifts: result?.completedShifts ?? 0,
         };
       });
+
+      processedUsers.sort((a, b) => {
+        // Users with any attendance come before users with none
+        if (a.hasTimedIn !== b.hasTimedIn) return a.hasTimedIn ? -1 : 1;
+        // Among those with attendance, newest time-in first
+        const aTime = a.timeInTimestamp
+          ? new Date(a.timeInTimestamp).getTime()
+          : 0;
+        const bTime = b.timeInTimestamp
+          ? new Date(b.timeInTimestamp).getTime()
+          : 0;
+        return bTime - aTime; // descending = latest on top
+      });
+
+      // Re-number the # column after sorting so it reads 1,2,3… in display order
+      processedUsers.forEach((u, i) => {
+        u.count = i + 1;
+      });
+
       setUserData(processedUsers);
       setAllUsers(
         processedUsers.map((u) => ({

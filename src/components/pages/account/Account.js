@@ -61,6 +61,9 @@ export default function Account() {
   ];
   const isAllowed = allowedRoles.includes(roleAccount);
 
+  const logisticsRoles = ["LOGISTICS HEAD", "LOGISTICS ACCOUNT SUPERVISOR"];
+  const canEdit = !logisticsRoles.includes(roleAccount);
+
   // Combined outlet pool from all selected accounts
   const outletPool = [
     ...new Set(selectedAccounts.flatMap((acc) => ACCOUNT_OUTLETS[acc] ?? [])),
@@ -236,13 +239,21 @@ export default function Account() {
       const loggedInBranches = JSON.parse(
         localStorage.getItem("outlet") || "[]",
       );
+
+      const logisticsRoles = ["LOGISTICS HEAD", "LOGISTICS ACCOUNT SUPERVISOR"];
+      const restrictToSpx = logisticsRoles.includes(roleAccount);
+
       const response = await axios.post(
         "https://api-trackpro.bmphrc.com/get-all-user",
       );
       const data = response.data.data;
-      const filteredByBranch = data.filter((item) =>
-        loggedInBranches.some((o) => item.outlet?.includes(o)),
-      );
+      const filteredByBranch = data.filter((item) => {
+        const inBranch = loggedInBranches.some((o) => item.outlet?.includes(o));
+        if (!inBranch) return false;
+        // ── NEW: if logistics, only SPX COORDINATOR passes ──
+        if (restrictToSpx && item.role !== "SPX COORDINATOR") return false;
+        return true;
+      });
       setUserData(
         filteredByBranch.map((d, key) => {
           const names = capitalizeWords([
@@ -281,6 +292,7 @@ export default function Account() {
   }
 
   const handleBranchSave = async () => {
+    if (!canEdit) return;
     // ── validate FIRST, before any save ──
     if (selectedAccounts.length === 0) {
       setSnackbar({
@@ -517,50 +529,20 @@ export default function Account() {
                   sx={inputSx}
                 />
 
-                {/* ── Step 1: Accounts (multi-select) ── */}
-                <Autocomplete
-                  multiple
-                  disableCloseOnSelect
-                  options={ACCOUNT_NAMES}
-                  value={selectedAccounts}
-                  onChange={handleAccountsChange}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Accounts"
-                      size="small"
-                      sx={inputSx}
-                    />
-                  )}
-                  renderOption={(props, option, { selected }) => (
-                    <li {...props}>
-                      <Checkbox style={{ marginRight: 8 }} checked={selected} />
-                      {option}
-                    </li>
-                  )}
-                />
-
-                {/* ── Step 2: Combined Outlets (only after ≥1 account selected) ── */}
-                {selectedAccounts.length > 0 ? (
+                {/* ── Editable section: hidden for LOGISTICS roles (view-only) ── */}
+                {canEdit && (
                   <>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "#94a3b8", mt: -1 }}
-                    >
-                      Showing outlets from: {selectedAccounts.join(", ")}
-                    </Typography>
+                    {/* ── Step 1: Accounts (multi-select) ── */}
                     <Autocomplete
                       multiple
                       disableCloseOnSelect
-                      options={outletPool}
-                      value={selectedOutlets}
-                      onChange={(_, v) => setSelectedOutlets(v)}
-                      getOptionLabel={(o) => o}
-                      isOptionEqualToValue={(o, v) => o === v}
+                      options={ACCOUNT_NAMES}
+                      value={selectedAccounts}
+                      onChange={handleAccountsChange}
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Outlets"
+                          label="Accounts"
                           size="small"
                           sx={inputSx}
                         />
@@ -575,65 +557,105 @@ export default function Account() {
                         </li>
                       )}
                     />
-                    <Stack direction="row" spacing={1.5}>
-                      <Button
-                        onClick={() => setSelectedOutlets(outletPool)}
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          flex: 1,
-                          backgroundColor: "#0aafeb",
-                          borderRadius: "10px",
-                          textTransform: "none",
-                          boxShadow: "none",
-                        }}
-                      >
-                        Select All
-                      </Button>
-                      <Button
-                        onClick={() => setSelectedOutlets([])}
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          flex: 1,
-                          backgroundColor: "#ef4444",
-                          borderRadius: "10px",
-                          textTransform: "none",
-                          boxShadow: "none",
-                        }}
-                      >
-                        Clear All
-                      </Button>
-                    </Stack>
-                  </>
-                ) : (
-                  <TextField
-                    label="Outlets"
-                    size="small"
-                    disabled
-                    fullWidth
-                    placeholder="Select an Account first"
-                    sx={inputSx}
-                  />
-                )}
 
-                <Button
-                  onClick={handleBranchSave}
-                  variant="contained"
-                  sx={{
-                    backgroundColor: "#0aafeb",
-                    borderRadius: "10px",
-                    textTransform: "none",
-                    fontWeight: 600,
-                    boxShadow: "none",
-                    "&:hover": {
-                      backgroundColor: "#0096c7",
-                      boxShadow: "none",
-                    },
-                  }}
-                >
-                  Save Outlet Changes
-                </Button>
+                    {/* ── Step 2: Combined Outlets (only after ≥1 account selected) ── */}
+                    {selectedAccounts.length > 0 ? (
+                      <>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#94a3b8", mt: -1 }}
+                        >
+                          Showing outlets from: {selectedAccounts.join(", ")}
+                        </Typography>
+                        <Autocomplete
+                          multiple
+                          disableCloseOnSelect
+                          options={outletPool}
+                          value={selectedOutlets}
+                          onChange={(_, v) => setSelectedOutlets(v)}
+                          getOptionLabel={(o) => o}
+                          isOptionEqualToValue={(o, v) => o === v}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Outlets"
+                              size="small"
+                              sx={inputSx}
+                            />
+                          )}
+                          renderOption={(props, option, { selected }) => (
+                            <li {...props}>
+                              <Checkbox
+                                style={{ marginRight: 8 }}
+                                checked={selected}
+                              />
+                              {option}
+                            </li>
+                          )}
+                        />
+                        <Stack direction="row" spacing={1.5}>
+                          <Button
+                            onClick={() => setSelectedOutlets(outletPool)}
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              flex: 1,
+                              backgroundColor: "#0aafeb",
+                              borderRadius: "10px",
+                              textTransform: "none",
+                              boxShadow: "none",
+                            }}
+                          >
+                            Select All
+                          </Button>
+                          <Button
+                            onClick={() => setSelectedOutlets([])}
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              flex: 1,
+                              backgroundColor: "#ef4444",
+                              borderRadius: "10px",
+                              textTransform: "none",
+                              boxShadow: "none",
+                            }}
+                          >
+                            Clear All
+                          </Button>
+                        </Stack>
+                      </>
+                    ) : (
+                      <TextField
+                        label="Outlets"
+                        size="small"
+                        disabled
+                        fullWidth
+                        placeholder="Select an Account first"
+                        sx={inputSx}
+                      />
+                    )}
+
+                    <Button
+                      onClick={handleBranchSave}
+                      variant="contained"
+                      sx={{
+                        backgroundColor: "#0aafeb",
+                        borderRadius: "10px",
+                        textTransform: "none",
+                        fontWeight: 600,
+                        boxShadow: "none",
+                        "&:hover": {
+                          backgroundColor: "#0096c7",
+                          boxShadow: "none",
+                        },
+                      }}
+                    >
+                      Save Outlet Changes
+                    </Button>
+                  </>
+                )}
+                {/* ── END editable section ── */}
+
                 <Button
                   onClick={() => setOpenModal(false)}
                   variant="outlined"
